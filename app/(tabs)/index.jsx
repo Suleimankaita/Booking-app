@@ -13,9 +13,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useGetBooksQuery } from "@/components/api/Getslice"; // RTK Query hook
+import { useGetBooksQuery ,useGetCategoriesQuery} from "@/components/api/Getslice"; // RTK Query hook
 import { uri } from "@/components/api/uri";
-
+import { getuserfound, SetRoute } from "../../components/Funcslice";
+import { useDispatch, useSelector } from "react-redux";
+import Useauth from "../hooks/Useauth";
 const { width } = Dimensions.get("window");
 const SPACING = 16;
 const CARD_WIDTH = (width - 3 * SPACING) / 2;
@@ -24,13 +26,14 @@ const CARD_WIDTH = (width - 3 * SPACING) / 2;
     1. CONSTANTS (Unchanged)
 ----------------------------- */
 
-const CATEGORIES = ["All", "Finance", "Self-help", "Fiction", "Fantasy", "Strategy"];
+const CATEGORIES = [{_id:0,name:"All"}];
 
 /* -----------------------------
     2. FULL PAGE SKELETON (Unchanged)
 ----------------------------- */
 
 const FullPageSkeleton = () => {
+  
   // Helpers for placeholder arrays
   const recommendedPlaceholders = Array(3).fill(0);
   const gridPlaceholders = Array(6).fill(0);
@@ -46,7 +49,7 @@ const FullPageSkeleton = () => {
 
         {/* Categories skeleton */}
         <SkeletonLoader.Container style={{ flexDirection: "row", marginTop: 12, marginBottom: 12 }}>
-          {CATEGORIES.slice(0, 6).map((_, i) => (
+          {Array(6).fill(6).slice(0, 6).map((_, i) => (
             <SkeletonLoader.Item
               key={i}
               width={80}
@@ -135,12 +138,16 @@ const FullPageSkeleton = () => {
 ----------------------------- */
 
 // ContinueReadingSection now takes a book object as a prop
-const ContinueReadingSection = ({ book }) => {
+const ContinueReadingSection = ({ book,dispatch }) => {
   if (!book) return null; // Safety check if no continue reading book is available
   return (
     <>
       <Text style={styles.sectionTitle}>Continue Reading</Text>
-      <TouchableOpacity style={styles.continueReadingCard}>
+      <TouchableOpacity style={styles.continueReadingCard} onPress={()=>{
+        dispatch(SetRoute(book.BookName))
+        router.push(`(ReaderDetails)/${book?._id}`)
+        
+      }} >
         <Image source={{ uri: `${uri}/img/${book?.CoverImg}` }} style={styles.continueReadingCover} />
         <View style={styles.readingDetails}>
           <Text style={styles.continueTitle}>{book?.title}</Text>
@@ -157,11 +164,10 @@ const ContinueReadingSection = ({ book }) => {
 };
 
 // RecommendedSection now takes a books array as a prop
-const RecommendedSection = ({ selectedCategory, books }) => {
+const RecommendedSection = ({ selectedCategory, books,dispatch }) => {
   if (!books || books.length === 0) return null;
-    console.log(books)
   const filteredBooks = selectedCategory === "All" ? books : books.filter(b => b.categories.toLowerCase() === selectedCategory.toLowerCase());
-
+  
   return (
     <>
       <Text style={styles.sectionTitle}>Recommended For You</Text>
@@ -170,7 +176,10 @@ const RecommendedSection = ({ selectedCategory, books }) => {
         horizontal
         keyExtractor={(i) => i?._id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.recommendedCard} onPress={()=>router.push(`(ReaderDetails)/${item?._id}`)} >
+          <TouchableOpacity style={styles.recommendedCard} onPress={()=>{
+        dispatch(SetRoute(item.BookName))
+            
+            router.push(`(ReaderDetails)/${item?._id}`)}} >
             <Image source={{ uri: `${uri}/img/${item?.CoverImg}` }} style={styles.recommendedCover} />
             <Text style={styles.recommendedTitle}>{item?.title}</Text>
             <Text style={styles.recommendedAuthor}>{item?.Author}</Text>
@@ -214,7 +223,7 @@ const AllBooksSection = ({ selectedCategory, books }) => {
 ----------------------------- */
 
 // This component uses useGetBooksQuery and renders the sections with the real data
-const RTKBooksList = ({ selectedCategory,allBooksData, isLoading, isError }) => {
+const RTKBooksList = ({ selectedCategory,allBooksData, isLoading, isError,dispatch }) => {
   // Replace all mock resource reads with the actual RTK Query hook
   // const { data: allBooksData, isLoading, isError } = useGetBooksQuery('',{
   //   pollingInterval:1000,
@@ -224,7 +233,7 @@ const RTKBooksList = ({ selectedCategory,allBooksData, isLoading, isError }) => 
 
   if (isLoading) {
     // Return the full-page skeleton while data is fetching
-    return <FullPageSkeleton />;
+    return <FullPageSkeleton  />;
   }
     
   if (isError || !allBooksData) {
@@ -246,9 +255,9 @@ const RTKBooksList = ({ selectedCategory,allBooksData, isLoading, isError }) => 
   return (
     <ScrollView style={styles.container}>
       {/* Pass the real data to the respective sections */}
-      <ContinueReadingSection book={continueReadingBook} />
-      <RecommendedSection selectedCategory={selectedCategory} books={recommendedBooks} />
-      <AllBooksSection selectedCategory={selectedCategory} books={allOtherBooks} />
+      <ContinueReadingSection book={continueReadingBook} {...{dispatch}} />
+      <RecommendedSection selectedCategory={selectedCategory} {...{dispatch}} books={recommendedBooks} />
+      <AllBooksSection selectedCategory={selectedCategory} books={allOtherBooks} {...{dispatch}} />
       <View style={{ height: 70 }} />
     </ScrollView>
   );
@@ -259,12 +268,42 @@ const RTKBooksList = ({ selectedCategory,allBooksData, isLoading, isError }) => 
 ----------------------------- */
 
 export default function BookListScreen() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const { data: allBooksData, isLoading, isError } = useGetBooksQuery('',{
+  
+  const user=useSelector(getuserfound)
+  const {ids}=Useauth()
+  let id=''
+  useEffect(()=>{
+  
+    console.log(21, user.id)
+
+  },[user])
+
+  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].name);
+
+  const { data: allBooksData, isLoading, isError } = useGetBooksQuery(user?.id,{
+    pollingInterval:1000,
+    refetchOnFocus:true, 
+    refetchOnReconnect:true
+  }); 
+  const { data: Cate,} = useGetCategoriesQuery('',{
     pollingInterval:1000,
     refetchOnFocus:true, 
     refetchOnReconnect:true
   });
+
+  // useEffect(()=>{
+  //   console.log(userData)
+  // },[userData])
+  const dispatch=useDispatch()
+  const [cateData,setCateData]=useState([{
+    name:""
+  }])
+
+  useEffect(()=>{
+    if(!Cate)return;
+
+    setCateData(Cate)
+  },[Cate])
 
   return (
     <View style={styles.safeArea}>
@@ -276,29 +315,29 @@ export default function BookListScreen() {
 
       {/* Categories */}
       <FlatList
-        data={CATEGORIES}
+        data={[...CATEGORIES,...cateData]}
         horizontal
-        keyExtractor={(item) => item?._id}
+        keyExtractor={((item,_) => _)}
         showsHorizontalScrollIndicator={false}
         style={{ height: 50 }}
         contentContainerStyle={{ paddingBottom: 16, paddingHorizontal: SPACING, }}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => setSelectedCategory(item)}
+            onPress={() => setSelectedCategory(item?.name)}
             style={[
               styles.categoryButton,
-              selectedCategory === item && styles.categoryButtonActive,
+              selectedCategory === item?.name && styles.categoryButtonActive,
             ]}
           >
-            <Text style={selectedCategory === item ? styles.categoryTextActive : styles.categoryText}>
-              {item}
+            <Text style={selectedCategory === item?.name ? styles.categoryTextActive : styles.categoryText}>
+              {item?.name}
             </Text>
           </TouchableOpacity>
         )}
       />
 
       {/* Use the new RTKBooksList component */}
-      <RTKBooksList {...{allBooksData, isLoading, isError,selectedCategory}} />
+      <RTKBooksList {...{allBooksData, isLoading, isError,selectedCategory,dispatch}} />
     </View>
   );
 }
@@ -317,9 +356,9 @@ const styles = StyleSheet.create({
 
   // CATEGORY BUTTONS
   categoryButton: { paddingVertical: 6, paddingHorizontal: 15, borderRadius: 20, backgroundColor: "#eee", marginRight: 10, height: 30 },
-  categoryButtonActive: { backgroundColor: "#4ade80" },
-  categoryText: { color: "#000", fontSize: 14 },
-  categoryTextActive: { color: "#000", fontSize: 14, fontWeight: "700" },
+  categoryButtonActive: { backgroundColor: "#338fe5ff" },
+  categoryText: { color: "#6d6565ff", fontSize: 14 },
+  categoryTextActive: { color: "#ffffffff", fontSize: 14, fontWeight: "700" },
 
   sectionTitle: { color: "#000", fontSize: 20, fontWeight: "bold", marginTop: 10, marginBottom: 15 },
 
@@ -330,8 +369,8 @@ const styles = StyleSheet.create({
   continueTitle: { color: "#000", fontSize: 18, fontWeight: "700" },
   continueAuthor: { color: "#555", marginBottom: 10 },
   progressBarContainer: { height: 6, backgroundColor: "#ddd", borderRadius: 3 },
-  progressBarFill: { height: "100%", backgroundColor: "#4ade80", borderRadius: 3 },
-  progressText: { color: "#4ade80", marginTop: 4 },
+  progressBarFill: { height: "100%", backgroundColor: "#338fe5ff", borderRadius: 3 },
+  progressText: { color: "#338fe5ff", marginTop: 4 },
 
   // RECOMMENDED
   recommendedCard: { width: 100, marginRight: 16, backgroundColor: "#f9f9f9", borderRadius: 8, padding: 5 },

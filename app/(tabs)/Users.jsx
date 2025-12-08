@@ -16,7 +16,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useGetUsersQuery } from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
 import { router } from 'expo-router';
-
+import { SetRoute } from '../../components/Funcslice';
+import { useDispatch } from 'react-redux';
 const screenWidth = Dimensions.get('window').width;
 
 // --- Mock Data ---
@@ -35,7 +36,7 @@ const USERS_DATA = [
 /**
  * Renders an individual user card item for the FlatList.
  */
-const UserCard = ({ user }) => (
+const UserCard = ({ user,dispatch }) => (
   <View style={styles.card}>
     <View style={styles.cardHeader}>
       {/* Placeholder for User Profile Image */}
@@ -68,7 +69,10 @@ const UserCard = ({ user }) => (
         <Text style={styles.statValue}>{user?.pursedBooksID?.length}</Text>
         <Text style={styles.statLabel}>Free Trials</Text>
       </View>
-      <TouchableOpacity onPress={()=>router.push(`(Users)/${user?._id}`)} style={styles.actionButton}>
+      <TouchableOpacity onPress={()=>{
+        dispatch(SetRoute(user?.Username))
+        router.push(`(Users)/${user?._id}`)}
+        } style={styles.actionButton}>
         <Text style={styles.actionButtonText}>View Details</Text>
       </TouchableOpacity>
     </View>
@@ -82,6 +86,7 @@ const UsersPage = () => {
     pollingInterval:1000,
     refetchOnFocus:true
   })
+  const dispatch=useDispatch()
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState(data);
 
@@ -108,7 +113,7 @@ const UsersPage = () => {
   // Renders a basic total count block at the top
   const ListHeaderComponent = () => (
     <View style={styles.totalUsersContainer}>
-      <Text style={styles.totalUsersCount}>{USERS_DATA.length}</Text>
+      <Text style={styles.totalUsersCount}>{users?.length}</Text>
       <Text style={styles.totalUsersText}>Total Users</Text>
     </View>
   );
@@ -138,7 +143,7 @@ const UsersPage = () => {
 
       <FlatList
         data={users}
-        renderItem={({ item }) => <UserCard user={item} />}
+        renderItem={({ item }) => <UserCard dispatch={dispatch} user={item} />}
         keyExtractor={item => item._id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={ListHeaderComponent}

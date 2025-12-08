@@ -3,6 +3,8 @@ import { uri } from '@/components/api/uri';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { getuserfound, SetRoute } from '../../components/Funcslice';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     Dimensions,
     FlatList,
@@ -51,7 +53,7 @@ const BOOK_CARD_HEIGHT = BOOK_CARD_WIDTH * 1.5;
 
 
 // --- COMPONENT: BookCard ---
-const BookCard = React.memo(({ book, onPress }) => {
+const BookCard = React.memo(({ book, onPress,dispatch }) => {
 
     
     const isFinished = book.progress === 100;
@@ -59,6 +61,7 @@ const BookCard = React.memo(({ book, onPress }) => {
     return (
         <TouchableOpacity style={libraryStyles.cardContainer} onPress={() => {
             console.log(book?._id)
+            dispatch(SetRoute(book?.BookName))
             router.push(`(ReaderDetails)/${book?._id}`)}}>
             <View style={libraryStyles.coverWrapper}>
                 <Image 
@@ -141,12 +144,14 @@ const Header = () => (
 
 // --- MAIN COMPONENT: MyBooksScreen ---
 const MyBooksScreen = ({ navigation }) => {
+    const user=useSelector(getuserfound)
     
-    const {data:datas}=useGetBooksQuery('',{
+    const {data:datas}=useGetBooksQuery(user?.id,{
         pollingInterval:1000,
         refetchOnFocus:true,
         refetchOnReconnect:true
     })
+    const dispatch=useDispatch()
     
     const [Books,setBooks]=useState([])
     const [Trials,setTrials]=useState([])
@@ -203,7 +208,7 @@ const MyBooksScreen = ({ navigation }) => {
                     data={filteredBooks}
                     keyExtractor={item => item?._id}
                     numColumns={NUM_COLUMNS}
-                    renderItem={({ item }) => <BookCard book={item} onPress={handleBookPress} />}
+                    renderItem={({ item }) => <BookCard dispatch={dispatch} book={item} onPress={handleBookPress} />}
                     contentContainerStyle={libraryStyles.bookGrid}
                     showsVerticalScrollIndicator={false}
                 />

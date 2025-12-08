@@ -6,6 +6,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PaystackProvider } from 'react-native-paystack-webview';
 import 'react-native-reanimated';
+import { useSelector } from 'react-redux';
+import { GetRoute } from '../../components/Funcslice';
 import { Provider } from 'react-redux';
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -13,26 +15,23 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
+  const route=useSelector(GetRoute)
   return (
 
-     <PaystackProvider  debug={false} defaultChannels={['card','bank_transfer','mobile_money','bank','eft','ussd']}
-      currency='NGN' publicKey="pk_live_9144bdf3abd12781f355056b32b05f8ebf169ed9" 
-      >
-    <Provider store={store}>
-    <ReaderProvider>
+    
 
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{title:"Home", headerShown: false }} />
+        <Stack.Screen name="(ReaderDetails)" options={{ title:route,headerShown: true }} />
+        <Stack.Screen name="(Users)/[id]" options={{ title:route,headerShown: true }} />
+        <Stack.Screen name="(AllBooksDetails)/[id]" options={{ title:route,headerShown: true }} />
         <Stack.Screen name="Reader/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="(Reg)/Sign" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
-    </ReaderProvider>
-    </Provider>
-</PaystackProvider>
   );
 }

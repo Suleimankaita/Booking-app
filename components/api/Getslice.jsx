@@ -24,15 +24,20 @@ export const getslice = apislice.injectEndpoints({
           : [{ type: "getdata", id: "LIST" }],
     }),
 
-    RemoveAllCategories: builder.mutation({
-      query: ({}) => ({
+    RemoveCategories: builder.mutation({
+      query: ({id}) => ({
         method: "DELETE",
-        url: "/Remove_all_categories",
+        url: "/remove_categories",
+        body:{id}
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
     }),
     GetBooks: builder.query({
       query:(id)=>`/GetBooks?id=${id}`,
+      providesTags:[{type:'getdata',id:"LIST"}]
+    }),
+    AdminBooks: builder.query({
+      query:(id)=>`/AdminBooks`,
       providesTags:[{type:'getdata',id:"LIST"}]
     }),
     GetPurchased: builder.query({
@@ -49,14 +54,18 @@ export const getslice = apislice.injectEndpoints({
       query:()=>"/AllUsers",
       providesTags:[{type:'getdata',id:"LIST"}]
     }),
+    GetCategories: builder.query({
+      query:()=>"/GetCategories",
+      providesTags:[{type:'getdata',id:"LIST"}]
+    }),
 
     
 
     AUTH: builder.mutation({
-      query: ({ username, password }) => ({
+      query: ({ Username, password }) => ({
         method: "POST",
-        url: "/Auth",
-        body: { username, password },
+        url: "/Auth/Auth",
+        body: { Username, password },
       }),
     }),
 
@@ -86,14 +95,30 @@ export const getslice = apislice.injectEndpoints({
     }),
 
       Reg: builder.mutation({
-      query: ({ username,Email,Password }) => ({
+      query: ({ form }) => ({
         method: "POST",
-        url: "/Reg",
-        body: { username,email:Email,password:Password },
+        url: "/Auth/Regs",
+        body:form,
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
     }),
      AddBooks: builder.mutation({
+      query: ({form}) => ({
+        method: "POST",
+        url: "/Buy/AddBooks",
+        body: form
+      }),
+      invalidatesTags: [{ type: "getdata", id: "LIST" }],
+    }),
+    PurchasedBook: builder.mutation({
+      query: ({id,CoverImg,EpubUri,description,BookName,Author}) => ({
+        method: "POST",
+        url: "/Buy/Purchased",
+        body: {id,CoverImg,EpubUri,description,BookName,Author}
+      }),
+      invalidatesTags: [{ type: "getdata", id: "LIST" }],
+    }),
+   UpdateBooks : builder.mutation({
       query: ({form}) => ({
         method: "POST",
         url: "/Buy/AddBooks",
@@ -109,12 +134,28 @@ export const getslice = apislice.injectEndpoints({
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
     }),
+      Add_categories: builder.mutation({
+      query: ({ name }) => ({
+        method: "POST",
+        url: "/Add_categories",
+        body: { name },
+      }),
+      invalidatesTags: [{ type: "getdata", id: "LIST" }],
+    }),
 
     edit_profile: builder.mutation({
       query: ({ username, password, id, image }) => ({
         method: "PATCH",
         url: "/edit_profile",
         body:image,
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: "getdata", id: arg.id }],
+    }),
+    UpdateProfile: builder.mutation({
+      query: ({ form }) => ({
+        method: "PATCH",
+        url: "/UpdateProfile",
+        body:form,
       }),
       invalidatesTags: (result, error, arg) => [{ type: "getdata", id: arg.id }],
     }),
@@ -161,14 +202,21 @@ export const {
   useGetdataQuery,
   useStartTrialMutation,
   useReset_passwordMutation,
+  useRemoveCategoriesMutation,
+  useAdd_categoriesMutation,
+  useGetCategoriesQuery,
   useSend_otpMutation,
   useGetPurchasedQuery,
+  usePurchasedBookMutation,
   useVerify_otpMutation,
   useUpdateBookPageMutation,
   useGetTrialsQuery,
   useGetUsersQuery,
   useAddBooksMutation,
-  useRemoveBookmarkMutation
+  useRemoveBookmarkMutation,
+    useAdminBooksQuery,
+  useUpdateProfileMutation,
+  useUpdateBooksMutation 
 } = getslice;
 
 const selectgetdataresult = getslice.endpoints.getdata.select();

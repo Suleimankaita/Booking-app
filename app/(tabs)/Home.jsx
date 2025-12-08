@@ -1,5 +1,6 @@
 import { useGetBooksQuery, useGetPurchasedQuery, useGetTrialsQuery, useGetUsersQuery } from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
+import { getuserfound } from '@/components/Funcslice';
 import React, { useEffect, useState } from 'react';
 import {
   Dimensions, Image, Platform,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { LineChart, PieChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useSelector } from 'react-redux';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -92,7 +94,7 @@ console.log(img)
 // --- Main Dashboard Component ---
 
 const BookishAnalyticsDashboard = () => {
-
+  const user=useSelector(getuserfound)
   const {data:UserData,isLoading:UserLoading}= useGetUsersQuery('',{
     pollingInterval:1000,
     refetchOnFocus:true
@@ -101,7 +103,7 @@ const BookishAnalyticsDashboard = () => {
     pollingInterval:1000,
     refetchOnFocus:true
   })
-  const {data:TotalBook,isLoading:TotalBookLoading}= useGetBooksQuery('',{
+  const {data:TotalBook,isLoading:TotalBookLoading}= useGetBooksQuery(user?.id,{
     pollingInterval:1000,
     refetchOnFocus:true
   })

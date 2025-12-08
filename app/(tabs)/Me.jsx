@@ -1,22 +1,26 @@
+import { getuserfound,clearAuth } from '@/components/Funcslice';
+import { useGetUsersQuery } from '@/components/api/Getslice';
+import { uri } from '@/components/api/uri';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker'; // 🆕 Import ImagePicker
-import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { useUpdateProfileMutation} from '@/components/api/Getslice';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
-    Image, // 🆕 Import TextInput
+    Image,
     KeyboardAvoidingView,
     Modal,
     Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
-    Text, // 🆕 Import Modal
+    Text,
     TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
-
-// --- STYLING CONSTANTS ---
+import Useauth from '../hooks/Useauth';
+import { useDispatch, useSelector } from 'react-redux';
 const PRIMARY_COLOR = '#4A90E2'; 
 const BACKGROUND_COLOR = '#F4F7F9'; 
 const CARD_BACKGROUND = '#FFFFFF';
@@ -24,16 +28,9 @@ const TEXT_COLOR = '#333333';
 const SUBTITLE_COLOR = '#757575';
 const BORDER_COLOR = '#EEEEEE';
 
-// --- INITIAL USER DATA ---
-const INITIAL_USER_DATA = {
-    name: 'Alex Johnson',
-    email: 'alex.johnson@readerapp.com',
-    username: '@alexj',
-    avatarUrl: 'https://i.pravatar.cc/100?img=1', // Placeholder URL
-};
 
 
-// --- REUSABLE SHADOW STYLE ---
+
 const softShadow = Platform.select({
     ios: {
         shadowColor: '#000',
@@ -47,7 +44,6 @@ const softShadow = Platform.select({
 });
 
 
-// --- REUSABLE COMPONENTS (Unchanged) ---
 const SettingsItem = ({ iconName, label, value, onPress, isEditable = false }) => (
     <TouchableOpacity 
         style={profileStyles.itemContainer} 
@@ -90,16 +86,31 @@ const SettingsButton = ({ label, color, iconName, onPress }) => (
 );
 
 
-// --- MAIN COMPONENT: UserSettingsScreen ---
 
 const UserSettingsScreen = () => {
-    const [user, setUser] = useState(INITIAL_USER_DATA);
+    // const {clearAuth}=Useauth()
+    const found=useSelector(getuserfound)
+    const [Edit,{isLoading}]=useUpdateProfileMutation()
+    const {data}=useGetUsersQuery('',{
+        pollingInterval:1000,
+        refetchOnFocus:true,
+        refetchOnReconnect:true
+    })
+    const [user, setUser] = useState({});
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [modalField, setModalField] = useState(null); // 'name', 'email', or 'password'
+    const [modalField, setModalField] = useState(null); 
     const [tempValue, setTempValue] = useState('');
-
-    // --- FUNCTIONALITY ---
-
+    const dispatch=useDispatch()
+    
+    useEffect(()=>{
+        if(!data)return;
+        const find=data.find(res=>res?._id===found?.id)
+        if(find){
+            console.log(find)
+            setUser(find)
+        }
+    },[data])
+    
     const handleLogout = () => {
         Alert.alert(
             "Confirm Logout",
@@ -108,55 +119,61 @@ const UserSettingsScreen = () => {
                 { text: "Cancel", style: "cancel" },
                 { text: "Log Out", style: "destructive", onPress: () => {
                     console.log('User logged out');
-                    // Add actual logout logic here
+                    dispatch(clearAuth())
                 }},
             ]
         );
     };
     
-    // 🆕 Function to open the modal for editing
     const openEditModal = (field) => {
         setModalField(field);
-        // Set initial value based on the field
-        if (field === 'name') setTempValue(user.name);
-        else if (field === 'email') setTempValue(user.email);
+        if (field === 'name') setTempValue(user.NameId?.firstname);
+        else if (field === 'email') setTempValue(user.NameId?.email);
         else if (field === 'password') setTempValue('');
         
         setIsModalVisible(true);
     };
     
-    // 🆕 Function to save the edited value
-    const saveEdit = () => {
+    const saveEdit = async() => {
+        
+        try{const form =new FormData()
         if (modalField === 'name') {
-            setUser(prev => ({ ...prev, name: tempValue.trim() || prev.name }));
         } else if (modalField === 'email') {
-             // Basic email validation check
+            
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(tempValue)) {
                 Alert.alert("Invalid Email", "Please enter a valid email address.");
                 return;
             }
-            setUser(prev => ({ ...prev, email: tempValue.trim() || prev.email }));
+            form.append("Username",user?.Username)
+            form.append('email',tempValue)
+            await Edit({form}).unwrap()
         } else if (modalField === 'password') {
             if (tempValue.length < 6) {
+                form.append("Username",user?.Username)
+                form.append("password",tempValue.trim())
+                await Edit({form}).unwrap()
                 Alert.alert("Password Too Short", "Password must be at least 6 characters.");
                 return;
             }
-            // In a real app, you'd send this new password to your backend here!
             Alert.alert("Success", "Password change request sent.");
         }
         
         setIsModalVisible(false);
         setTempValue('');
         setModalField(null);
-    };
+    }catch(err){
+        alert(err.message)
+    }
+}
+;
 
-    // 🆕 Image Picker Function
     const pickImage = async () => {
-        // Request permission if needed
-        if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
+        try{
+
+            if (Platform.OS !== 'web') {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
                 Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work.');
                 return;
             }
@@ -168,17 +185,26 @@ const UserSettingsScreen = () => {
             aspect: [1, 1],
             quality: 1,
         });
-
+        
         if (!result.canceled) {
-            // result.assets[0].uri holds the URI on Expo/RN
-            setUser(prev => ({ ...prev, avatarUrl: result.assets[0].uri }));
+            const img=result?.assets[0].uri.split('.').at(-1);
+            const form=new FormData()
+            form.append("Username",user?.Username)
+            form.append('file',{
+                uri:result?.assets[0].uri,
+                type:'file.'+img,
+                name:'file.'+img,
+            })
+            await Edit({form}).unwrap()
+
             console.log("New avatar URI:", result.assets[0].uri);
-            // In a real app, upload this URI to your server
         }
-    };
+    }catch(err){
+        alert(err?.message)
+    }
+}
 
 
-    // --- MODAL RENDER ---
     const renderEditModal = () => {
         let title = '';
         let inputType = 'default';
@@ -243,30 +269,26 @@ const UserSettingsScreen = () => {
         );
     };
 
-    // --- SCREEN RENDER ---
     return (
         <SafeAreaView style={profileStyles.container}>
             {renderEditModal()}
             <ScrollView contentContainerStyle={profileStyles.scrollContent}>
 
-                {/* --- Header --- */}
                 <View style={profileStyles.header}>
-                    <Text style={profileStyles.headerTitle}>Profile Settings</Text>
-                </View>
+                    {/* <Text style={profileStyles.headerTitle}>Profile Settings</Text> */}
+                </View> 
 
-                {/* --- Profile Card (Avatar & Name) --- */}
                 <View style={profileStyles.profileCard}>
                     <TouchableOpacity onPress={pickImage}>
-                        <Image source={{ uri: user.avatarUrl }} style={profileStyles.avatar} />
+                        <Image resizeMode='cover' source={{uri:`${uri}/img/${user?.NameId?.img}`}} style={profileStyles.avatar} />
                         <View style={profileStyles.cameraBadge}>
                              <Ionicons name="camera" size={18} color={CARD_BACKGROUND} />
                         </View>
                     </TouchableOpacity>
-                    <Text style={profileStyles.userName}>{user.name}</Text>
-                    <Text style={profileStyles.userHandle}>{user.username}</Text>
+                    <Text style={profileStyles.userName}>{user.Username}</Text>
+                    <Text style={profileStyles.userHandle}>{user?.NameId?.firstname}</Text>
                 </View>
 
-                {/* --- Account Details Section --- */}
                 <View style={profileStyles.sectionContainer}>
                     <Text style={profileStyles.sectionTitle}>Account Details</Text>
                     
@@ -274,18 +296,18 @@ const UserSettingsScreen = () => {
                         <SettingsItem 
                             iconName="mail-outline"
                             label="Email Address"
-                            value={user.email}
+                            value={user.NameId?.email}
                             onPress={() => openEditModal('email')}
                             isEditable={true}
                         />
                         <View style={profileStyles.separator} />
-                        <SettingsItem 
+                        {/* <SettingsItem 
                             iconName="person-outline"
                             label="Full Name"
                             value={user.name}
                             onPress={() => openEditModal('name')}
                             isEditable={true}
-                        />
+                        /> */}
                         <View style={profileStyles.separator} />
                         <SettingsItem 
                             iconName="lock-closed-outline"
@@ -297,7 +319,6 @@ const UserSettingsScreen = () => {
                     </View>
                 </View>
 
-                {/* --- Actions Section --- */}
                 <View style={profileStyles.sectionContainer}>
                     <Text style={profileStyles.sectionTitle}>Actions</Text>
                     

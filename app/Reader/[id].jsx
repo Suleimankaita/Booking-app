@@ -6,6 +6,8 @@ import * as Speech from 'expo-speech';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, FlatList, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import WebView from 'react-native-webview';
+import { getuserfound, setUserfound } from '@/components/Funcslice';
+import { useSelector } from 'react-redux';
 // --- CONFIGURATION ---
 // const EPUB_FILE_URL = 'https://s3.amazonaws.com/moby-dick/moby-dick.epub'; 
 const BOOKMARKS_STORAGE_KEY = '@EpubReader:Bookmarks'; // 🆕 Key for AsyncStorage
@@ -35,7 +37,8 @@ const darkStyles = {
 
 
 const EpubReader = () => {
-    const {data,isLoading,isError,error}=useGetBooksQuery('',{
+    const user=useSelector(getuserfound)
+    const {data,isLoading,isError,error}=useGetBooksQuery(user?.id,{
         refetchOnReconnect:true,
     })
     const [Save]=useUpdateBookPageMutation()

@@ -1,13 +1,13 @@
-// screens/BookDetailsPage.js
-import { useGetBooksQuery, useStartTrialMutation } from '@/components/api/Getslice';
+import { useGetBooksQuery, useStartTrialMutation ,usePurchasedBookMutation} from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { usePaystack } from 'react-native-paystack-webview';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// Helper function to calculate remaining time in a readable format
+import SkeletonLoader from 'expo-skeleton-loader';
+import { getuserfound } from '@/components/Funcslice';
+import { useSelector } from 'react-redux';
 const getRemainingTime = (endTime) => {
   if (!endTime) return null;
   const now = new Date();
@@ -32,58 +32,62 @@ const getRemainingTime = (endTime) => {
 
 
 const BookDetailsPage = () => {
+  const user=useSelector(getuserfound)
   const { id } = useLocalSearchParams();
   const [Trials, { isLoading: isStartingTrial, isSuccess }] = useStartTrialMutation();
   const router = useRouter();
-  const { data, isLoading: isBooksLoading } = useGetBooksQuery('', {
+  const { data, isLoading: isBooksLoading } = useGetBooksQuery(user?.id, {
     pollingInterval: 1000,
     refetchOnFocus: true,
     refetchOnReconnect: true
   });
 
-  // Consolidated State for book data and access status
+  const [Purchased,{isLoading:AddLoadingBook}]=usePurchasedBookMutation()
   const [book, setBook] = useState(null);
-  // State for displaying remaining time (updated by an interval)
   const [timeRemaining, setTimeRemaining] = useState(null);
   const refr=Date.now();
     const { popup } = usePaystack();
+    const [loader,setloader]=useState(false)
     
 
-  // 1. Load Book Data & Map MongoDB fields to state
+    useEffect(()=>{
+      setloader(true)
+      setTimeout(() => {
+      setloader(false)
+        
+      }, 2000);
+      return()=> setloader(false)
+    },[])
+
+    const [price,setprice]=useState(0)
+
   useEffect(() => {
     if (!data || isBooksLoading) return;
 
     const foundBook = data.find(res => res?._id === id);
     console.log(foundBook)
     if (foundBook) {
-      // Map MongoDB fields to simplified state fields
       const trialEndsTime = foundBook.trialExpires?.$date || foundBook.trialExpires;
-
+      setprice(foundBook?.price)
       setBook({
         ...foundBook,
-        // Using MongoDB's field names: ispurchased, isFreeTrial, trialExpires
         isPurchased: foundBook?.isPurchased || false, 
-        trialActive: foundBook.isFreeTrial || false, // Renamed to trialActive for clarity
-        // Convert the MongoDB date string to a JS Date object
+        trialActive: foundBook.isFreeTrial || false, 
         trialEnds: trialEndsTime ? new Date(trialEndsTime) : null,
       });
     }
   }, [id, data, isBooksLoading]);
 
-  // 2. Real-Time Trial Clock and Expiration Check
   useEffect(() => {
     let intervalId;
 
     if (book?.trialActive && book?.trialEnds) {
-      // Start the interval to update the time every second
       intervalId = setInterval(() => {
         const remaining = getRemainingTime(book.trialEnds);
         setTimeRemaining(remaining);
 
-        // If the trial has expired (time is zero or negative)
         if (remaining?.expired) {
           clearInterval(intervalId);
-          // Trigger the expiration alert and state reset
           setBook(prev => ({ ...prev, trialActive: false, trialEnds: null }));
           Alert.alert(
             "Trial Ended",
@@ -93,10 +97,8 @@ const BookDetailsPage = () => {
         }
       }, 1000);
     } else {
-      setTimeRemaining(null); // Clear time display if trial is not active
-    }
+      setTimeRemaining(null);     }
 
-    // Cleanup function
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
@@ -108,23 +110,17 @@ const BookDetailsPage = () => {
     if (isStartingTrial) return;
 
     try {
-      // Note: The backend must return the updated book data (including new trialExpires)
-      const res = await Trials({ userId: '6928356f57a6192347d3ee00', bookId: book?._id, BookName: book?.BookName, Username: "Suleiman" }).unwrap();
+      const res = await Trials({ userId: user?.id, bookId: book?._id, BookName: book?.BookName, Username: user?.username}).unwrap();
       console.log(res);
 
-      // RTK Query polling interval will likely pick up the new trial status from the server
-      // If the server doesn't return the updated book immediately, the polling will handle it.
-      // We rely on the RTK refetch/polling to update the book state from the server.
 
     } catch (err) {
       alert(err?.message || "Failed to start trial.");
     }
   };
 
-  // Optional: Immediate UI update after a successful trial start mutation (if server response is quick)
   useEffect(() => {
     if (isSuccess) {
-      // Calculate 24 hours from the current time (this assumes your server also uses 24 hours)
       const trialEndTime = new Date();
       trialEndTime.setHours(trialEndTime.getHours() + 24); 
 
@@ -139,33 +135,28 @@ const BookDetailsPage = () => {
     }
   }, [isSuccess]);
 
-  const handlePurchase = () => {
+  const handlePurchase = async() => {
     
+                
         popup.checkout({
           email:'suleiman20015kaita@gmail.com',
-          amount: Number(1000),
+          amount: Number(price),
           reference:refr,
           invoice_limit: 3,
           subaccount: 'ACCT_iskhq4np3wpwy31',
-        //   split_code: 'SPL_def456',
-        //   split: {
-        //     type: 'percentage',
-        //     bearer_type: 'account',
-        
-        //   },
           metadata: {
-            custom_fields: [
-              {
-                display_name: 'Order ID',
-                variable_name: 'order_id',
-                value: 'OID1234'
-              }
-            ]
+        
           },
           onSuccess: async(res) => {
-            if(res.status==="success"){
-              console.log('Success:', res)
+            try{
 
+              if(res.status==="success"){
+                console.log('Success:', res)
+    await Purchased({ description:book?.description,Author:book?.Author,id: user?.id,BookName: book?.BookName, Username: user?.username,price:book?.price,CoverImg:book?.CoverImg,EpubUri:book?.EpubUri}).unwrap();
+                
+              }
+            }catch(err){
+              alert(err?.message)
             }
             
           },
@@ -235,7 +226,7 @@ const BookDetailsPage = () => {
 actionButton = (
      <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
           <Icon name="cart-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Buy ${book?.price||1000}</Text>
+          <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
         </TouchableOpacity>
 
     );
@@ -247,10 +238,9 @@ actionButton = (
       <View style={styles.buttonGroup}>
         <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
           <Icon name="cart-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Buy ${book?.price}</Text>
+          <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
         </TouchableOpacity>
 
-        {/* Show Trial Button only if it hasn't expired (or if the state has been reset) */}
         <TouchableOpacity 
           style={[styles.actionButton, styles.trialButton]} 
           onPress={handleStartTrial} 
@@ -276,7 +266,7 @@ actionButton = (
           <Image
             source={{ uri: `${uri}/img/${book?.CoverImg}` }}
             style={styles.coverImage}
-            resizeMode="contain" 
+            resizeMode="cover" 
           />
           <Text style={styles.title}>{book.BookName || book.title}</Text>
           <Text style={styles.author}>By {book.author}</Text>
@@ -288,7 +278,13 @@ actionButton = (
         </View>
 
         <View style={styles.actionArea}>
-          {actionButton}
+          {!loader?(actionButton):(
+            <SkeletonLoader boneColor="#e6e6e6" highlightColor="#f2f2f2">
+              <SkeletonLoader.Item style={{width:150,height:50,borderRadius:10}}>
+
+              </SkeletonLoader.Item>
+            </SkeletonLoader>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -305,17 +301,18 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingBottom: 20,
     backgroundColor: '#f5f5f5',
   },
   coverImage: {
-    width: 200, 
+    width: "100%", 
     height: 300, 
     marginBottom: 15,
-    borderRadius: 8,
+    // borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
+    // top:'-5%',
     shadowRadius: 10,
   },
   title: {
