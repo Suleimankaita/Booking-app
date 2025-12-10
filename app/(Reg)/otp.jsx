@@ -11,7 +11,7 @@ import {
   ScrollView
 } from 'react-native';
 import * as Device from "expo-device" 
-import { useSend_otpMutation,useVerify_otpMutation,useResetsMutation,useEdit_profileMutation } from '@/components/api/Getslice';
+import { useSend_otpMutation,useVerify_otpMutation,useResetsMutation,useEdit_profileMutation,useReset_passwordMutation } from '@/components/api/Getslice';
 import { router } from 'expo-router';
 const API_URL =uri; // Replace with your backend base URL
 
@@ -21,7 +21,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
   const [contact, setContact] = useState('');
   const [SendMail]=useSend_otpMutation()
   const [Verify]=useVerify_otpMutation()
-  const [Reset,{isSuccess}]=useResetsMutation()
+  const [Reset,{isSuccess}]=useReset_passwordMutation()
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(0);
   const [newPassword, setNewPassword] = useState('');
@@ -112,7 +112,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const data = await Reset({email:contact,password:newPassword });
+      const data = await Reset({email:contact,newPassword });
       console.log(data);
       if (data.data?.sucess) {
         Alert.alert('Success', 'Password reset successfully! Please log in.');
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     padding: 15,
-    backgroundColor: '#f97316',
+    backgroundColor: '#3498db',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

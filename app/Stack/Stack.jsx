@@ -20,7 +20,7 @@ export default function RootLayout() {
 
     
 
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    // <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       
       <Stack>
         <Stack.Screen name="(tabs)" options={{title:"Home", headerShown: false }} />
@@ -29,9 +29,11 @@ export default function RootLayout() {
         <Stack.Screen name="(AllBooksDetails)/[id]" options={{ title:route,headerShown: true }} />
         <Stack.Screen name="Reader/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="(Reg)/Sign" options={{ headerShown: false }} />
+        <Stack.Screen name="(Reg)/Login" options={{title:"Login", headerShown: false }} />
+        <Stack.Screen name="(Reg)/otp" options={{title:"ResetPassword", headerShown: true }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <StatusBar style="inverted" />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    // </ThemeProvider>
   );
 }

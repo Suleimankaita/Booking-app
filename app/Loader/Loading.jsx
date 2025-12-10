@@ -2,7 +2,7 @@ import { StyleSheet, Text, View,Animated,Easing,Image } from 'react-native'
 import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons';
-import Logo from "../../assets/images/splash-icon.png"
+import Logo from "../../assets/images/logo.png"
 
 const Loading = () => {
 

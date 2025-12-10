@@ -43,7 +43,7 @@ const DUMMY_BOOKS = [
 ];
 
 // --- CONSTANTS ---
-const FILTERS = ['All Books', 'Trials','Reading', 'Finished', 'Unread',];
+const FILTERS = ['All Books', 'Trials','Reading', 'Finished',];
 const NUM_COLUMNS = 3;
 // Calculate dynamic spacing and width
 const GRID_PADDING = 20;
@@ -142,7 +142,6 @@ const Header = () => (
 );
 
 
-// --- MAIN COMPONENT: MyBooksScreen ---
 const MyBooksScreen = ({ navigation }) => {
     const user=useSelector(getuserfound)
     

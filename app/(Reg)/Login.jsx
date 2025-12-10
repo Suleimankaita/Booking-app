@@ -24,7 +24,7 @@ const LoginScreen = () => {
 
   const Submit = async () => {
     try {
-      const result = await Sub({ username, password });
+      const result = await Sub({ Username:username, password });
 
       console.log('Login Response:', result);
 
@@ -162,13 +162,13 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   forgotPasswordText: {
-    color: '#f97316',
+    color: '#3498db',
     fontSize: 14,
     fontWeight: '600',
   },
   button: {
     width: '80%',
-    backgroundColor: '#f97316',
+    backgroundColor: '#3498db',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   signupLinkText: {
     fontSize: 16,
-    color: '#f97316',
+    color: '#3498db',
     fontWeight: '600',
     marginLeft: 5,
   },

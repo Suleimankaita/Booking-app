@@ -2,10 +2,9 @@ import { Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Alert, Dimensions, FlatList, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 // 👈 NEW IMPORT: expo-image-picker
-import { useAddBooksMutation } from '@/components/api/Getslice';
+import { useAddBooksMutation ,useGetCategoriesQuery} from '@/components/api/Getslice';
 import * as ImagePicker from 'expo-image-picker';
 
-// ⭐ NEW IMPORT: expo-document-picker for EPUB/PDF
 import * as DocumentPicker from 'expo-document-picker';
 import { Link } from 'expo-router';
 
@@ -20,8 +19,20 @@ const MOCK_CATEGORIES = ["Fiction", "Fantasy", "Self-Help", "Finance", "Science"
 /**
  * Custom Modal Component for Category Picker
  */
-const CategoryPickerModal = ({ categories, selectedValue, onSelect, onClose }) => (
-    <Modal
+const CategoryPickerModal = ({ categories, selectedValue, onSelect, onClose }) =>{
+    const {data}=useGetCategoriesQuery('',{
+        pollingInterval:1000,
+        refetchOnFocus:true,
+        refetchOnReconnect:true
+    })
+    const [datas,setdatas]=useState([])
+    
+    useEffect(()=>{
+        if(!data)return;
+        setdatas(data)
+    },[data])
+    return(
+        <Modal
         animationType="slide"
         transparent={true}
         visible={true}
@@ -31,15 +42,15 @@ const CategoryPickerModal = ({ categories, selectedValue, onSelect, onClose }) =
             <View style={pickerStyles.modalView}>
                 <Text style={pickerStyles.modalTitle}>Select Category</Text>
                 <FlatList
-                    data={categories}
-                    keyExtractor={(item) => item}
+                    data={datas}
+                    keyExtractor={(item) => item?._id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
-                            style={pickerStyles.categoryItem}
-                            onPress={() => { onSelect(item); onClose(); }}
+                        style={pickerStyles.categoryItem}
+                            onPress={() => { onSelect(item?.name); onClose(); }}
                         >
                             <Text style={[pickerStyles.categoryText, selectedValue === item && pickerStyles.categoryTextSelected]}>
-                                {item}
+                                {item?.name}
                             </Text>
                             {selectedValue === item && <Feather name="check-circle" size={20} color="#5C6BC0" />}
                         </TouchableOpacity>
@@ -53,6 +64,7 @@ const CategoryPickerModal = ({ categories, selectedValue, onSelect, onClose }) =
     </Modal>
 );
 
+}
 /**
  * Component to simulate the PDF/EPUB upload and conversion logic.
  */

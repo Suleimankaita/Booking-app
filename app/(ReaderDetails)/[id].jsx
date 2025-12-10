@@ -34,13 +34,19 @@ const getRemainingTime = (endTime) => {
 const BookDetailsPage = () => {
   const user=useSelector(getuserfound)
   const { id } = useLocalSearchParams();
-  const [Trials, { isLoading: isStartingTrial, isSuccess }] = useStartTrialMutation();
+  const [Trials, { isLoading: isStartingTrial, isSuccess ,error,isError}] = useStartTrialMutation();
   const router = useRouter();
   const { data, isLoading: isBooksLoading } = useGetBooksQuery(user?.id, {
     pollingInterval: 1000,
     refetchOnFocus: true,
     refetchOnReconnect: true
   });
+
+  useEffect(()=>{
+    if(isError){
+      alert(error.data?.message)
+    }
+  },[isError,error])
 
   const [Purchased,{isLoading:AddLoadingBook}]=usePurchasedBookMutation()
   const [book, setBook] = useState(null);
@@ -115,6 +121,7 @@ const BookDetailsPage = () => {
 
 
     } catch (err) {
+      
       alert(err?.message || "Failed to start trial.");
     }
   };
@@ -136,6 +143,7 @@ const BookDetailsPage = () => {
   }, [isSuccess]);
 
   const handlePurchase = async() => {
+    await Purchased({ description:book?.description,Author:book?.Author,id: user?.id,BookName: book?.BookName, Username: user?.username,price:book?.price,CoverImg:book?.CoverImg,EpubUri:book?.EpubUri}).unwrap();
     
                 
         popup.checkout({

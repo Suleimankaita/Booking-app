@@ -10,18 +10,21 @@ import { Image } from 'react-native';
 import { uri } from '@/components/api/uri';
 import Useauth from '../hooks/Useauth';
 import Img from '../img';
+import { getuserfound } from '@/components/Funcslice';
+import { useSelector } from 'react-redux';
 export default function TabLayout() {
 const { username, userData } = Useauth();
 const colorScheme = useColorScheme();
+const Role=useSelector(getuserfound)
 
 
 
-
-  const role="User"
+  const role=Role?.Role
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        
         headerShown: true,
         headerTitleAlign:"left",
         tabBarButton: HapticTab,

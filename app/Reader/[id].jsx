@@ -40,6 +40,7 @@ const EpubReader = () => {
     const user=useSelector(getuserfound)
     const {data,isLoading,isError,error}=useGetBooksQuery(user?.id,{
         refetchOnReconnect:true,
+        pollingInterval:1000
     })
     const [Save]=useUpdateBookPageMutation()
     const [Del]=useUpdateBookPageMutation()
@@ -84,6 +85,7 @@ const EpubReader = () => {
             setBookss(find)
             // console.log(find?.cfi)
             // const loadedBookmarks = JSON.parse(datas);
+            console.log(bookss?.mt)
                 setBookmarks(find?.BookMarks);
                 setLastReadCfi(find?.cfi);
                 
@@ -111,7 +113,6 @@ const EpubReader = () => {
                 const loadedBookmarks = JSON.parse(datas);
                 // setBookmarks(loadedBookmarks);
                 // Set the last read position to the latest bookmark for resuming
-                console.log(loadedBookmarks)
                 if (loadedBookmarks.length > 0) {
                     const latestBookmark = loadedBookmarks[loadedBookmarks.length - 1];
                     // setLastReadCfi(latestBookmark.cfi);
@@ -127,7 +128,7 @@ const EpubReader = () => {
             if(!newBookmarks&&!bookss)return
 
             console.log(21)
-            await Save({cfi:currentCfi,progress:globalProgress,BookName:bookss?.BookName})
+            await Save({cfi:currentCfi,progress:globalProgress,BookName:bookss?.BookName,id})
 
             // await Save({cfi:newBookmarks[0]?.cfi,progress:globalProgress,BookName:bookss?.BookName})
             // await AsyncStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(newBookmarks));
@@ -271,7 +272,7 @@ const EpubReader = () => {
         if (!currentCfi || !currentChapterTitle) return;
         //  saveBookmarks(bookmarks);
 
-        console.log("Curent",currentCfi)
+        // console.log("Curent",currentCfi)
         setBookmarks(prevBookmarks => {
             // Check if a bookmark at the EXACT CFI already exists
             const existingIndex = prevBookmarks.findIndex(b => b.cfi === currentCfi);
@@ -296,7 +297,7 @@ const EpubReader = () => {
                 return [...prevBookmarks.filter(b => b.cfi !== currentCfi), newBookmark];
             }
         });
-            await Save({cfi:currentCfi,progress:globalProgress,BookName:bookss?.BookName})
+            await Save({cfi:currentCfi,progress:globalProgress,BookName:bookss?.BookName,id,mt:bookss?.mt})
 
     }, [currentCfi, currentChapterTitle, currentPage, totalPages, globalProgress]);
 

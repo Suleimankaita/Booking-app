@@ -72,7 +72,7 @@ export const getslice = apislice.injectEndpoints({
     Send_otp: builder.mutation({
       query: ({ email ,Device}) => ({
         method: "POST",
-        url: "/send_otp",
+        url: "/otp/Sendotp",
         body: { email,Device },
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
@@ -80,15 +80,15 @@ export const getslice = apislice.injectEndpoints({
     verify_otp: builder.mutation({
       query: ({ email,otp }) => ({
         method: "POST",
-        url: "/verify-otp",
+        url: "/otp/VerifyOtp",
         body: { email,otp },
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
     }),
     reset_password: builder.mutation({
       query: ({ newPassword,email }) => ({
-        method: "POST",
-        url: "/reset-password",
+        method: "PATCH",
+        url: "/otp/resetOtp_password",
         body: { newPassword,email },
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],
@@ -168,10 +168,10 @@ export const getslice = apislice.injectEndpoints({
       invalidatesTags: (result, error, arg) => [{ type: "getdata", id: arg.id }],
     }),
    UpdateBookPage: builder.mutation({
-      query: ({ cfi,chapter,progress,BookName,BookMarks }) => ({
+      query: ({ cfi,chapter,progress,BookName,BookMarks,id,mt }) => ({
         method: "PATCH",
         url: "/UpdateBookPage",
-        body:{cfi,chapter,progress,BookName,BookMarks},
+        body:{cfi,chapter,progress,BookName,BookMarks,id,mt},
       }),
       invalidatesTags: (result, error, arg) => [{ type: "getdata", id: arg.id }],
     }),
@@ -216,7 +216,8 @@ export const {
   useRemoveBookmarkMutation,
     useAdminBooksQuery,
   useUpdateProfileMutation,
-  useUpdateBooksMutation 
+  useUpdateBooksMutation ,
+  
 } = getslice;
 
 const selectgetdataresult = getslice.endpoints.getdata.select();

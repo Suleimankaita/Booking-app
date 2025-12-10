@@ -23,6 +23,8 @@ import {
     useUpdateProfileMutation 
 } from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearAuth, getuserfound } from '@/components/Funcslice';
 
 // --- STYLING CONSTANTS ---
 const PRIMARY_COLOR = '#4A90E2';
@@ -124,27 +126,23 @@ const UserSettingsScreen = () => {
     const [password, setpassword] = useState('');
     const [img, setimg] = useState('');
     
-    // Modal State
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalField, setModalField] = useState(null);
     const [tempValue, setTempValue] = useState('');
     const [newCategoryText, setNewCategoryText] = useState('');
-
-    const id = "6928356f57a6192347d3ee00"; // Hardcoded ID as provided
-
-    // --- EFFECT: SYNC CATEGORIES ---
+    const users=useSelector(getuserfound)
+    const id = users?.id; 
+    const dispatch=useDispatch()
     useEffect(() => {
         if (!CateData) return;
         setCategories(CateData);
     }, [CateData]);
 
-    // --- EFFECT: SYNC USER DATA ---
     useEffect(() => {
         if (!UserData) return;
         const find = UserData.find(res => res?._id === id);
         
         if (find) {
-            // Update independent state variables
             setemail(find?.email);
             setpassword(find?.password);
             setusername(find?.Username);
@@ -165,7 +163,8 @@ const UserSettingsScreen = () => {
     const handleLogout = () => {
         Alert.alert("Confirm Logout", "Are you sure you want to log out?", [
             { text: "Cancel", style: "cancel" },
-            { text: "Log Out", style: "destructive", onPress: () => console.log('Logged out') },
+            { text: "Log Out", style: "destructive", onPress: () =>dispatch(clearAuth())
+             },
         ]);
     };
 

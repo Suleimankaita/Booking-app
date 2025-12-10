@@ -430,7 +430,7 @@ const RegistrationScreen = () => {
 
                 <View style={styles.loginContainer}>
                     <Text style={styles.loginText}>Already have an account?</Text>
-                    <TouchableOpacity onPress={() => { /* Add navigation logic here */ }}>
+                    <TouchableOpacity onPress={() => { router.push('./Login') }}>
                         <Text style={styles.loginLink}>Login</Text>
                     </TouchableOpacity>
                 </View>
