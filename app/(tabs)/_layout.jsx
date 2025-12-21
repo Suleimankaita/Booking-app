@@ -16,8 +16,26 @@ export default function TabLayout() {
 const { username, userData } = Useauth();
 const colorScheme = useColorScheme();
 const Role=useSelector(getuserfound)
+  const usess=useSelector(getuserfound)
 
 
+ useEffect(() => {
+        console.log("User authenticated:", usess);
+  
+        // If Username is empty, null, or undefined → redirect
+        if (!usess.username || !usess?.id) {
+          const timer = setTimeout(() => {
+            router.replace('(Reg)/Login')
+            console.log("username empty → redirecting...", usess?.username);
+          }, 10);
+      
+          return () => clearTimeout(timer);
+        }
+      
+        console.log("User authenticated:", usess);
+      
+      }, [ usess,usess.username, router]);
+      
 
   const role=Role?.Role
   return (
@@ -32,7 +50,7 @@ const Role=useSelector(getuserfound)
       }}>
       <Tabs.Screen
         name="index"
-        redirect={role!=="User"}
+        redirect={role==="Admin"}
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
@@ -48,7 +66,7 @@ const Role=useSelector(getuserfound)
       />
       <Tabs.Screen
         name="Library"
-        redirect={role!=="User"}
+        redirect={role==="Admin"}
         options={{
           title: 'Library',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="book" color={color} />,
@@ -56,7 +74,7 @@ const Role=useSelector(getuserfound)
       />
       <Tabs.Screen
         name="Me"
-        redirect={role!=="User"}
+        redirect={role==="Admin"}
 
         options={{
           title: 'Me',

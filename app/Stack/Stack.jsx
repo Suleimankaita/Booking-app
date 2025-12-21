@@ -27,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="(ReaderDetails)" options={{ title:route,headerShown: true }} />
         <Stack.Screen name="(Users)/[id]" options={{ title:route,headerShown: true }} />
         <Stack.Screen name="(AllBooksDetails)/[id]" options={{ title:route,headerShown: true }} />
+        <Stack.Screen name="(EditBook)/[id]" options={{ title:"EditBook",headerShown: true }} />
         <Stack.Screen name="Reader/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="(Reg)/Sign" options={{ headerShown: false }} />
         <Stack.Screen name="(Reg)/Login" options={{title:"Login", headerShown: false }} />

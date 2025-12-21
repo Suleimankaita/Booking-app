@@ -6,7 +6,7 @@ import { useAddBooksMutation ,useGetCategoriesQuery} from '@/components/api/Gets
 import * as ImagePicker from 'expo-image-picker';
 
 import * as DocumentPicker from 'expo-document-picker';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const SPACING = 16;
@@ -200,7 +200,7 @@ export default function AddBookScreen() {
       const [fileName, setFileName] = useState(null);
     const [fileUri, setFileUri] = useState(null); // To store the actual URI/path of the selected file
  
-    const [AddBook]=useAddBooksMutation()
+    const [AddBook,{isSuccess}]=useAddBooksMutation()
 
     const [title, setTitle] = useState('');
     const [price, setprice] = useState('');
@@ -215,6 +215,12 @@ export default function AddBookScreen() {
     const [ageRating, setAgeRating] = useState('13+');
     const [isFeatured, setIsFeatured] = useState(false);
     
+
+    useEffect(()=>{
+        if(isSuccess){
+            router.replace('/(tabs)/AllBooks')
+        }
+    },[isSuccess])
 
     // --- FUNCTIONALITY: Book Cover Upload with expo-image-picker ---
     const handleImagePick = async () => {
@@ -416,7 +422,7 @@ export default function AddBookScreen() {
                     <FileConverterInput {...{ fileName, setFileName ,fileUri, setFileUri}} />
 
                     {/* 8. Tags Input/Display */}
-                    <Text style={styles.label}>Tags</Text>
+                    {/* <Text style={styles.label}>Tags</Text>
                     <View style={styles.tagsContainer}>
                         {tags.map((tag, index) => (
                             <View key={index} style={styles.tagPill}>
@@ -436,10 +442,10 @@ export default function AddBookScreen() {
                                 e.nativeEvent.text = '';
                             }}
                         />
-                    </View>
+                    </View> */}
 
                     {/* 9. Age Rating Toggle/Input */}
-                    <View style={styles.switchRow}>
+                    {/* <View style={styles.switchRow}>
                         <Text style={styles.labelSwitch}>Age Rating ({ageRating})</Text>
                         <Switch
                             value={ageRating === '18+'}
@@ -447,10 +453,10 @@ export default function AddBookScreen() {
                             trackColor={{ false: "#E0E0E0", true: "#5C6BC0" }}
                             thumbColor="#fff"
                         />
-                    </View>
+                    </View> */}
                     
                     {/* 10. Featured Toggle */}
-                    <View style={styles.switchRow}>
+                    {/* <View style={styles.switchRow}>
                         <Text style={styles.labelSwitch}>Featured (yes/no)</Text>
                         <Switch
                             value={isFeatured}
@@ -459,7 +465,7 @@ export default function AddBookScreen() {
                             thumbColor="#fff"
                         />
                     </View>
-                    
+                     */}
                 </View>
             </ScrollView>
 

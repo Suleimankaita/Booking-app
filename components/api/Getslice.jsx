@@ -120,8 +120,8 @@ export const getslice = apislice.injectEndpoints({
     }),
    UpdateBooks : builder.mutation({
       query: ({form}) => ({
-        method: "POST",
-        url: "/Buy/AddBooks",
+        method: "PATCH",
+        url: "/UpdateBook",
         body: form
       }),
       invalidatesTags: [{ type: "getdata", id: "LIST" }],

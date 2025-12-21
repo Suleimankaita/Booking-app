@@ -161,8 +161,10 @@ export default function EditBookScreen() {
     const user=useSelector(getuserfound)
     const router = useRouter();
     const {data}=useGetBooksQuery(user?.id,{
-        pollingInterval:1000,
-        refetchOnFocus:true
+        // pollingInterval:1000,
+        // refetchOnFocus:true,
+        // refetchOnMountOrArgChange:true
+
     })
     
     // 1. Get existing book data from navigation params
@@ -185,39 +187,53 @@ export default function EditBookScreen() {
     const [fileName, setFileName] = useState('');
     const [fileUri, setFileUri] = useState('');
 
+  
+
     const [Book,setBook]=useState({})
-    useEffect(()=>{
-        if(!data)return;
-        const find=data.find(res=>res?._id===id)
-        if(find){
-            console.log(find)
-            setBook(find)
-             setTitle(find?.title || '');
-     setPrice(find.price ? String(find?.price) : '');
-    setBookName(find?.BookName || '');
-    setAuthor(find?.Author || '');
-     setCategory(find?.categories || null);
-     setDescription(find?.description || '');
-     setPublishDate(find?.publishDate || '2025-11-25');
-    setTags(['Fiction', 'Fantasy']); // You might need to parse this if passed from params
-     setAgeRating('13+');
-     setIsFeatured(false);
+   // Add a state to track if the form has been initialized
+const [isInitialized, setIsInitialized] = useState(false);
 
-    // Image State
-    setBookCoverUri (`${uri}/img/${find?.CoverImg}`); 
-    
-    // File State
-     setFileName(Book?.EpubUri || null);
-     setFileUri(`${uri}/uploads/${find?.EpubUri}`);
-
+useEffect(() => {
+    // Only run this if we have data, an ID, and we haven't initialized yet
+    if (data && id && !isInitialized) {
+        const bookToEdit = data.find(item => item._id === id);
+        
+        if (bookToEdit) {
+            setTitle(bookToEdit.title || '');
+            setPrice(bookToEdit.price ? String(bookToEdit.price) : '');
+            setBookName(bookToEdit.BookName || '');
+            setAuthor(bookToEdit.Author || '');
+            setCategory(bookToEdit.categories || null);
+            setDescription(bookToEdit.description || '');
+            
+            if (bookToEdit.CoverImg) {
+                setBookCoverUri(`${uri}/img/${bookToEdit.CoverImg}`);
+            }
+            if (bookToEdit.EpubUri) {
+                setFileName(bookToEdit.EpubUri);
+                const remoteUri = `${uri}/uploads/${bookToEdit.EpubUri}`;
+                setFileUri(remoteUri);
+                // setExistingFileUri(remoteUri);
+            }
+            
+            // Mark as initialized so this block never runs again for this session
+            setIsInitialized(true);
         }
-    },[id,data])
+    }
+}, [data, id, isInitialized]); // Add isInitialized to dependencies
     // Parse params if they come as strings, or use defaults
     // const bookId = params.id;
     // const existingCover = Book.CoverImg ? `${uri}/img/${Book.CoverImg}` : null;
     const existingEpub = Book.EpubUri ? `${uri}/uploads/${Book.EpubUri}` : null;
 
-    const [UpdateBook] = useUpdateBooksMutation(); // Assuming you have this mutation
+    const [UpdateBook,{isSuccess}] = useUpdateBooksMutation(); // Assuming you have this mutation
+
+      useEffect(()=>{
+        if(isSuccess){
+                    router.replace('/(tabs)/AllBooks')
+        
+        }
+    },[isSuccess])
 
     // 2. Initialize state with existing data
     
@@ -298,6 +314,7 @@ export default function EditBookScreen() {
 
         } catch (err) {
             console.error(err);
+            console.error(err.data?.message || err.message);
             Alert.alert("Update Failed", err?.data?.message || err?.message || "An error occurred");
         }
     };
@@ -414,7 +431,7 @@ export default function EditBookScreen() {
                     />
 
                     {/* Tags (Optional UI) */}
-                    <Text style={styles.label}>Tags</Text>
+                    {/* <Text style={styles.label}>Tags</Text>
                     <View style={styles.tagsContainer}>
                         {tags.map((tag, index) => (
                             <View key={index} style={styles.tagPill}>
@@ -424,10 +441,10 @@ export default function EditBookScreen() {
                                 </TouchableOpacity>
                             </View>
                         ))}
-                    </View>
+                    </View> */}
 
                     {/* Featured Toggle */}
-                    <View style={styles.switchRow}>
+                    {/* <View style={styles.switchRow}>
                         <Text style={styles.labelSwitch}>Featured</Text>
                         <Switch
                             value={isFeatured}
@@ -435,7 +452,7 @@ export default function EditBookScreen() {
                             trackColor={{ false: "#E0E0E0", true: "#5C6BC0" }}
                             thumbColor="#fff"
                         />
-                    </View>
+                    </View> */}
                     
                 </View>
             </ScrollView>
