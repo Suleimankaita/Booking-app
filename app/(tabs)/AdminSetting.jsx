@@ -256,10 +256,10 @@ const UserSettingsScreen = () => {
 
     // --- CATEGORY FUNCTIONALITY ---
     const handleAddCategory = async () => {
-        if (newCategoryText.trim().length === 0) {
-            Alert.alert("Couldn't add", "Please enter a category name.");
-            return;
-        }
+        // if (newCategoryText.trim().length === 0) {
+        //     Alert.alert("Couldn't add", "Please enter a category name.");
+        //     return;
+        // }
         try {
             await AddCate({ name: newCategoryText }).unwrap();
             setNewCategoryText(''); // Clear input

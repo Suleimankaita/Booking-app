@@ -1,4 +1,4 @@
-import { useAdminBooksQuery, useGetUsersQuery } from '@/components/api/Getslice';
+import { useAdminBooksQuery, useGetUsersQuery ,useDeleteBookMutation} from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
 import { Ionicons } from '@expo/vector-icons'; // Assuming you are using Expo or have react-native-vector-icons installed
 import { router, useLocalSearchParams } from 'expo-router';
@@ -126,7 +126,14 @@ const Rates = ({ rate }) => {
   );
 };
 
+  const [Delete,{isSuccess}]=useDeleteBookMutation()
 
+  useEffect(()=>{
+
+    if(isSuccess){
+      router.back()
+    }
+  },[isSuccess,router])
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -175,7 +182,7 @@ const Rates = ({ rate }) => {
               <TouchableOpacity style={styles.readTrialButton} onPress={()=>router.push(`../Reader/${id}`)}>
                 <Text style={styles.readTrialButtonText}>READ FREE TRIAL</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.addLibraryButton}>
+              <TouchableOpacity style={styles.addLibraryButton} onPress={async()=>Delete({id})}>
                 <Text style={styles.addLibraryButtonText}>Delete The Book </Text>
               </TouchableOpacity>
             </View>

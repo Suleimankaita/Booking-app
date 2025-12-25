@@ -131,12 +131,12 @@ const Header = () => (
     <View style={libraryStyles.header}>
         <Text style={libraryStyles.headerTitle}>My Library</Text>
         <View style={libraryStyles.headerIcons}>
-            <TouchableOpacity style={libraryStyles.iconButton}>
+            {/* <TouchableOpacity style={libraryStyles.iconButton}>
                 <Ionicons name="search" size={24} color={TEXT_COLOR} />
             </TouchableOpacity>
             <TouchableOpacity style={libraryStyles.iconButton}>
                 <MaterialCommunityIcons name="sort-alphabetical-ascending" size={24} color={TEXT_COLOR} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </View>
     </View>
 );

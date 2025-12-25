@@ -13,7 +13,6 @@ import {
 import * as Device from "expo-device" 
 import { useSend_otpMutation,useVerify_otpMutation,useResetsMutation,useEdit_profileMutation,useReset_passwordMutation } from '@/components/api/Getslice';
 import { router } from 'expo-router';
-const API_URL =uri; // Replace with your backend base URL
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [step, setStep] = useState(1);

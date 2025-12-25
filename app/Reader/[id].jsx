@@ -63,7 +63,7 @@ const EpubReader = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [currentChapterTitle, setCurrentChapterTitle] = useState('...');
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_SIZE_INDEX);
-    
+    const [metadata, setMetadata] = useState('');
     // Bookmarks are now objects containing the cfi, chapter title, and page info for display
     const [bookmarks, setBookmarks] = useState([]); 
     
@@ -86,6 +86,7 @@ const EpubReader = () => {
             // console.log(find?.cfi)
             // const loadedBookmarks = JSON.parse(datas);
             console.log(bookss?.mt)
+            setMetadata(find?.BookName)
                 setBookmarks(find?.BookMarks);
                 setLastReadCfi(find?.cfi);
                 
@@ -370,7 +371,7 @@ const EpubReader = () => {
                     setCurrentChapterTitle(data.title || 'Chapter');
                     break;
                 case 'loaded':
-                    setTitle(data.title);
+                    setTitle(metadata || 'Unknown Title');
                     setAuthor(data.author || 'Unknown Author');
                     setToc(data.toc);
                     // Set initial theme/styles/font
@@ -432,7 +433,7 @@ const EpubReader = () => {
         } catch (e) {
             console.error('Error processing WebView message:', e);
         }
-    }, [injectJS, theme, isTocVisible, isBookmarkModalVisible, toggleControls, fontSizeIndex]);
+    }, [injectJS, theme, isTocVisible, isBookmarkModalVisible, toggleControls, fontSizeIndex,metadata]);
     
     const currentStyles = theme === 'light' ? lightStyles : darkStyles;
     

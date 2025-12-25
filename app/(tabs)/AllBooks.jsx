@@ -124,7 +124,7 @@ const BookItem = ({ book, onBookPress,dispatch }) => {
       </View>
 
       <Text numberOfLines={2} style={styles.bookTitle}>
-        {book.title}
+        {book.BookName}
       </Text>
       <Text numberOfLines={2} style={[styles.bookTitle,{color:'rgba(39, 69, 218, 1)'}]}>
         {book.Author}
@@ -158,7 +158,10 @@ const BookItem = ({ book, onBookPress,dispatch }) => {
 
 // --- 3. Main Library Component (Added Search) ---
 export default function MyLibraryScreen() {
-  const {data:BookData} = useAdminBooksQuery()
+  const {data:BookData} = useAdminBooksQuery('',{
+    pollingInterval: 1000,
+
+  })
   const [activeTab, setActiveTab] = useState('ALL BOOKS');
   const [searchQuery, setSearchQuery] = useState(''); // NEW: State for search input
   

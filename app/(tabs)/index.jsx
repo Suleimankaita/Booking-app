@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, color: "#000", fontSize: 16 },
 
   // CATEGORY BUTTONS
-  categoryButton: { paddingVertical: 6, paddingHorizontal: 15, borderRadius: 20, backgroundColor: "#eee", marginRight: 10, height: 30 },
+  categoryButton: {alignItems:"center",justifyContent:'center', paddingVertical: 0, paddingHorizontal: 15, borderRadius: 20, backgroundColor: "#eee", marginRight: 10, height: 35 },
   categoryButtonActive: { backgroundColor: "#338fe5ff" },
   categoryText: { color: "#6d6565ff", fontSize: 14 },
   categoryTextActive: { color: "#ffffffff", fontSize: 14, fontWeight: "700" },

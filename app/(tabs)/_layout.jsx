@@ -69,7 +69,7 @@ const Role=useSelector(getuserfound)
         redirect={role==="Admin"}
         options={{
           title: 'Library',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="book" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -78,7 +78,7 @@ const Role=useSelector(getuserfound)
 
         options={{
           title: 'Me',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="person" color={color} />,
         }}
       />
       {/* <Tabs.Screen
@@ -102,7 +102,7 @@ const Role=useSelector(getuserfound)
         redirect={role==="User"}
         options={{
           title: 'AddBooks',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="book" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -110,7 +110,7 @@ const Role=useSelector(getuserfound)
         redirect={role==="User"}
         options={{
           title: 'Users',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="person-2" color={color} />,
         }}
       />
       <Tabs.Screen

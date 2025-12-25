@@ -138,7 +138,7 @@ const BookDetailsPage = () => {
         isPurchased: false,
       }));
 
-      Alert.alert("Trial Started!", "You have 24 hours of reading access.");
+      // Alert.alert("Trial Started!", "You have 24 hours of reading access.");
     }
   }, [isSuccess]);
 
@@ -222,14 +222,22 @@ const BookDetailsPage = () => {
         <Text style={styles.buttonText}>Read Now</Text>
       </TouchableOpacity>
     );
-  } else if (book.trialActive && timeRemaining && !timeRemaining.expired) {
-    // STATE 2: Trial Active
+  }
+   else if (book.trialActive && timeRemaining && !timeRemaining.expired) {
+   
     actionButton = (
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#f39c12' }]} onPress={handleReadBook}>
-        <Icon name="timer-outline" size={20} color="#fff" />
-        <Text style={styles.buttonText}>Trial Active ({timeRemaining.text})</Text>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#2ecc71' }]} onPress={handleReadBook}>
+        <Icon name="book-outline" size={20} color="#fff" />
+        <Text style={styles.buttonText}>Read Now</Text>
       </TouchableOpacity>
     );
+    // STATE 2: Trial Active
+    // actionButton = (
+    //   <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#f39c12' }]} onPress={handleReadBook}>
+    //     <Icon name="timer-outline" size={20} color="#fff" />
+    //     <Text style={styles.buttonText}>Trial Active ({timeRemaining.text})</Text>
+    //   </TouchableOpacity>
+    // );
   }else if(book?.istrialend){
 actionButton = (
      <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
@@ -241,30 +249,35 @@ actionButton = (
   } else {
     // STATE 3: No Access or Trial Expired
     const trialExpired = book.trialActive && timeRemaining?.expired;
-    
-    actionButton = (
-      <View style={styles.buttonGroup}>
-        <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
-          <Icon name="cart-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.trialButton]} 
-          onPress={handleStartTrial} 
-          disabled={isStartingTrial}
-        >
-          {isStartingTrial ? (
-            <ActivityIndicator size="small" color="#3498db" />
-          ) : (
-            <>
-              <Icon name="flash-outline" size={20} color="#3498db" />
-              <Text style={[styles.buttonText, { color: '#3498db' }]}>24hr Trial</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+     actionButton = (
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#2ecc71' }]} onPress={handleStartTrial}>
+        <Icon name="book-outline" size={20} color="#fff" />
+        <Text style={styles.buttonText}>Read Now</Text>
+      </TouchableOpacity>
     );
+    // actionButton = (
+    //   <View style={styles.buttonGroup}>
+    //     <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
+    //       <Icon name="cart-outline" size={20} color="#fff" />
+    //       <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
+    //     </TouchableOpacity>
+
+    //     <TouchableOpacity 
+    //       style={[styles.actionButton, styles.trialButton]} 
+    //       onPress={handleStartTrial} 
+    //       disabled={isStartingTrial}
+    //     >
+    //       {isStartingTrial ? (
+    //         <ActivityIndicator size="small" color="#3498db" />
+    //       ) : (
+    //         <>
+    //           <Icon name="flash-outline" size={20} color="#3498db" />
+    //           <Text style={[styles.buttonText, { color: '#3498db' }]}>24hr Trial</Text>
+    //         </>
+    //       )}
+    //     </TouchableOpacity>
+    //   </View>
+    // );
   }
 
   return (

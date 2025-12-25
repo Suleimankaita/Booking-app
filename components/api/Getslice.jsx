@@ -68,6 +68,13 @@ export const getslice = apislice.injectEndpoints({
         body: { Username, password },
       }),
     }),
+    DeleteBook: builder.mutation({
+      query: ({ id }) => ({
+        method: "DELETE",
+        url: "/DeleteBook",
+        body: { id },
+      }),
+    }),
 
     Send_otp: builder.mutation({
       query: ({ email ,Device}) => ({
@@ -199,6 +206,7 @@ export const {
   useEdit_profileMutation,
   useResetsMutation,
   useGetBooksQuery,
+  useDeleteBookMutation,
   useGetdataQuery,
   useStartTrialMutation,
   useReset_passwordMutation,
