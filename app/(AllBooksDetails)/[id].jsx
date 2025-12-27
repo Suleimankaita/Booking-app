@@ -35,7 +35,7 @@ const BookCover = ({ img }) => (
 // --- Main Book Details Component ---
 export default function BookDetailsScreen() {
     const {data,isLoading}=useAdminBooksQuery('',{
-        pollingInterval:100,
+        pollingInterval:1000,
         refetchOnFocus:true,
         refetchOnReconnect:true
     })

@@ -11,12 +11,12 @@ import {
     ActivityIndicator,
     Image, 
     Keyboard,
-    findNodeHandle, 
     Platform,
-    Modal ,
-    SafeAreaView
+    Modal,
+    SafeAreaView,
+    KeyboardAvoidingView
 } from 'react-native';
-import { useRegMutation,useAUTHMutation } from '@/components/api/Getslice';
+import { useRegMutation, useAUTHMutation } from '@/components/api/Getslice';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker'; 
 import DateTimePicker from '@react-native-community/datetimepicker'; 
@@ -25,25 +25,56 @@ import { settoken } from '@/components/Funcslice';
 import { useDispatch } from 'react-redux';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const RegistrationScreen = () => {
-    const [Registrations,{isSuccess:regSuccess,isLoading,isError,error}]=useRegMutation()
-    const [Login,{isSuccess:logsuccess}]=useAUTHMutation()
-    const twentyYearsAgo = new Date();
-    const [Births,setBirths]=useState('')
-    twentyYearsAgo.setFullYear(twentyYearsAgo.getFullYear() - 20);
-    const dispatch=useDispatch()
+    // API Hooks
+    const [Registrations, { isSuccess: regSuccess, isLoading, isError, error }] = useRegMutation();
+    const [Login, { isSuccess: logSuccess }] = useAUTHMutation();
+    const dispatch = useDispatch();
+
+    // Refs for inputs
+    const usernameRef = useRef(null);
+    const passwordRef = useRef(null);
+    const emailRef = useRef(null);
+    const firstNameRef = useRef(null);
+    const lastNameRef = useRef(null);
+
+    // State Initialization
     const [formData, setFormData] = useState({
         username: '',
         email: '',
         firstname: '',
         lastname: '',
         password: '',
-        birth: twentyYearsAgo, 
+        // Initialize date safely inside state
+        birth: new Date(new Date().setFullYear(new Date().getFullYear() - 20)), 
         profileImageUri: null,
     });
+
     const [loading, setLoading] = useState(false);
     const [receiveEmails, setReceiveEmails] = useState(true);
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    // --- Effects ---
+
+    // Handle Registration Error
+    useEffect(() => {
+        if (isError) {
+            const errorMsg = error?.data?.message || "An unexpected error occurred.";
+            Alert.alert("Registration Error", errorMsg);
+            setLoading(false);
+        }
+    }, [isError, error]);
+
+    // Handle Login Success (Auto Login after Reg)
+    useEffect(() => {
+        if (logSuccess) {
+            setLoading(false);
+            router.replace('/');
+        }
+    }, [logSuccess]);
+
+    // --- Handlers ---
 
     const handleInputChange = (name, value) => {
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -57,123 +88,74 @@ const RegistrationScreen = () => {
             year: 'numeric',
         });
     };
-
-    const scrollViewRef = useRef(null); 
-    const usernameRef = useRef(null);
-    const passwordRef = useRef(null);
-    const emailRef = useRef(null);
-    const firstNameRef = useRef(null);
-    const lastNameRef = useRef(null);
-    const birthRef = useRef(null); 
-
-    useEffect(()=>{
-        if(isError){
-            alert(error?.data?.message)
-        }
-    },[isError])
-
-
-
-    useEffect(()=>{
-      const ms=async()=>{
-              const get=await AsyncStorage.getItem('cokkie')
-              console.log(32, get)
-              if(get){
-              }
-
-      }
-      ms()
-    },[])
-    const Logins=async()=>{
-        try{
-            const res=await Login({Username:formData.username,password:formData.password})
-            console.log(res.data)
-            await AsyncStorage.setItem('cokkie',JSON.stringify(res.data))
-            dispatch(settoken(res.data))
-        }catch(err){
-            alert(err?.message)
-        }
-    }
-    useEffect(()=>{
-        if(logsuccess){
-        router.replace('/')
-        }
-    },[logsuccess])
-
-    // --- 3. Scroll and Focus Logic (Unchanged) ---
-    const handleScrollToInput = (inputRef) => {
-        const inputNode = findNodeHandle(inputRef.current);
-        
-        if (inputNode && scrollViewRef.current) {
-            setTimeout(() => {
-                inputRef.current.measureLayout(
-                    findNodeHandle(scrollViewRef.current),
-                    (x, y) => {
-                        console.log(x , y)
-                        // scrollViewRef.current.scrollTo({ y: y - 10, animated: true });
-                    },
-                    () => {}
-                );
-            }, 100); 
-        }
-    };
-    
+        const [Birth, setBirth] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 20)));
     const focusNextInput = (ref) => {
-        if (ref.current) {
+        if (ref?.current) {
             ref.current.focus();
         } else {
             Keyboard.dismiss();
         }
     };
 
-    const addimg=async()=>{
-        try{
-            const {status}=await ImagePicker.requestMediaLibraryPermissionsAsync()
-            if(status!=='granted'){
-                return alert('Sorry we dont have permission to access your library')
+    const handleImagePick = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                return Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
             }
-            const result= await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  aspect: [1, 1],
-                  quality: 1,
-                });
-                if(!result.canceled){
-                    setFormData(prev=>({
-                        ...prev,
-                        profileImageUri:result.assets[0].uri
-                    }))
-                }
-        }catch(err){
-            alert(err.message)
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8, // Reduced quality slightly for faster upload
+            });
+
+            if (!result.canceled) {
+                setFormData(prev => ({
+                    ...prev,
+                    profileImageUri: result.assets[0].uri
+                }));
+            }
+        } catch (err) {
+            Alert.alert("Error", "Failed to pick image.");
         }
-    }
+    };
 
     const onDateChange = (event, selectedDate) => {
         const currentDate = selectedDate || formData.birth;
-        setBirths(currentDate?.toISOString())
+        console.log("Selected Date:", currentDate);
         if (Platform.OS === 'android') {
-            setShowDatePicker(false); 
+            setShowDatePicker(false);
+            
         }
 
-        if (event.type === 'set') {
+        if (event.type === 'set' || Platform.OS === 'ios') {
             handleInputChange('birth', currentDate);
         }
+        setBirth(currentDate);
     };
 
-    const confirmIOSDate = () => {
-        setShowDatePicker(false);
-        scrollViewRef.current?.scrollToEnd({ animated: true }); 
+    const performLogin = async () => {
+        try {
+            const res = await Login({ 
+                Username: formData.username, 
+                password: formData.password 
+            }).unwrap(); // Use .unwrap() to handle RTK Query errors correctly in try/catch
+            
+            await AsyncStorage.setItem('cokkie', JSON.stringify(res));
+            dispatch(settoken(res));
+        } catch (err) {
+            setLoading(false);
+            Alert.alert("Login Failed", err?.data?.message || err?.message || "Could not log in automatically.");
+        }
     };
-
-    useEffect(()=>{
-        console.log(Births)
-    },[Births])
 
     const handleRegister = async () => {
         if (loading) return;
 
-        if (!formData.username || !formData.email || !formData.firstname ||!Births) {
+        // Basic Validation
+        if (!formData.username || !formData.email || !formData.firstname || !formData.password) {
             Alert.alert("Missing Fields", "Please fill in all required fields.");
             return;
         }
@@ -181,261 +163,273 @@ const RegistrationScreen = () => {
         setLoading(true);
         Keyboard.dismiss();
 
-        const registrationData = {
-            username: formData.username,
-            email: formData.email,
-            firstname: formData.firstname,
-            lastname: formData.lastname,
-            birth: formData.birth.toISOString(), 
-            receiveEmails: receiveEmails,
-        };
-
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000)); 
-            const form=new FormData();
-            form.append('firstname',formData.firstname)    
-            form.append('lastname',formData.lastname)    
-            form.append('email',formData.email)    
-            form.append('Username',formData.username);
-            form.append('password',formData.password);
-            form.append('Birth',Births);
-            const img=formData.profileImageUri.split('.').at(-1)
-            form.append('file',{
-                uri:formData.profileImageUri,
-                name:'file.'+img,
-                type:'file.'+img,
-            });
+            const form = new FormData();
+            
+            // Append Text Fields
+            form.append('firstname', formData.firstname);
+            form.append('lastname', formData.lastname);
+            form.append('email', formData.email);
+            form.append('Username', formData.username);
+            form.append('password', formData.password);
+            form.append('Birth', Birth.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+            form.append('receiveEmails', String(receiveEmails)); // Convert boolean to string for FormData
 
-            const regs=await Registrations({form})
-            console.log(regs)
-            if(regs.data){
+            // Append Image (CRITICAL FIX FOR ANDROID)
+            if (formData.profileImageUri) {
+                const uri = Platform.OS === 'android' 
+                    ? formData.profileImageUri 
+                    : formData.profileImageUri.replace('file://', '');
                 
-                Logins()
-            } 
+                const filename = uri.split('/').pop();
+                
+                // Infer type based on extension
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-            setLoading(false);
-            Alert.alert(
-                "Success! 🎉", 
-                `Account created for ${formData.username}.`,
-                [{ text: "Continue", onPress: () => { /* Add navigation logic here */ } }]
-            );
+                form.append('file', {
+                    uri: uri,
+                    name: filename,
+                    type: type, // MUST be a valid MIME type (e.g., image/jpeg), not 'file.jpg'
+                });
+            }
+
+            // Call API
+            const regs = await Registrations({form}).unwrap(); // Use .unwrap() to catch errors here
+            
+            console.log("Registration Success:", regs);
+            
+            // If successful, attempt login
+            await performLogin();
+
         } catch (error) {
+            console.error("Registration Error:", error);
             setLoading(false);
-            Alert.alert("Registration Failed", "A network or server error occurred. Please try again.");
+            const msg = error?.data?.message || "Network request failed. Please check your internet connection.";
+            Alert.alert("Registration Failed", msg);
         }
     };
 
-    // --- 6. Render UI ---
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView 
-                ref={scrollViewRef} 
-                contentContainerStyle={styles.scrollContent} 
-                keyboardShouldPersistTaps="handled"
+            {/* KeyboardAvoidingView handles the scrolling logic automatically and better than measureLayout */}
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
             >
-                
-                {/* Header and Profile Picture Sections (Unchanged) */}
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Create Account</Text>
-                    <Text style={styles.headerSubtitle}>Complete your profile details below</Text>
-                </View>
-                
-                <View style={styles.profileSection}>
-                    <View style={styles.profileImageWrapper}>
-                        {formData.profileImageUri ? (
-                            <Image source={{ uri: formData.profileImageUri }} style={styles.profileImage} />
-                        ) : (
-                            <Icon name="person-outline" size={40} color="#fff" />
-                        )}
-                        <TouchableOpacity style={styles.cameraIcon} onPress={addimg}>
-                            <Icon name="camera" size={18} color="#fff" />
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent} 
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>Create Account</Text>
+                        <Text style={styles.headerSubtitle}>Complete your profile details below</Text>
+                    </View>
+                    
+                    {/* Profile Picture */}
+                    <View style={styles.profileSection}>
+                        <View style={styles.profileImageWrapper}>
+                            {formData.profileImageUri ? (
+                                <Image source={{ uri: formData.profileImageUri }} style={styles.profileImage} />
+                            ) : (
+                                <Icon name="person-outline" size={40} color="#fff" />
+                            )}
+                            <TouchableOpacity style={styles.cameraIcon} onPress={handleImagePick}>
+                                <Icon name="camera" size={18} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity style={styles.uploadButton} onPress={handleImagePick}>
+                            <Text style={styles.uploadButtonText}>
+                                {formData.profileImageUri ? 'Change Photo' : 'Add Profile Photo'}
+                            </Text>
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.uploadButton} onPress={addimg}>
-                        <Text style={styles.uploadButtonText}>{formData.profileImageUri ? 'Change Photo' : 'Add Profile Photo'}</Text>
-                    </TouchableOpacity>
-                </View>
 
-                {/* Form Fields */}
-                <View style={styles.formContainer}>
-                    {/* Username */}
-                    <View style={styles.inputGroup}>
-                        <Icon name="person-circle-outline" size={22} color="#444" style={styles.inputIcon} />
-                        <TextInput
-                            ref={usernameRef}
-                            style={styles.input}
-                            placeholder="Username"
-                            value={formData.username}
-                            onChangeText={(text) => handleInputChange('username', text)}
-                            autoCapitalize="none"
-                            returnKeyType="next"
-                            onSubmitEditing={() => focusNextInput(passwordRef)}
-                            onFocus={() => handleScrollToInput(usernameRef)} 
-                        />
-                    </View>
-                    
-                    <View style={styles.inputGroup}>
-                        <MaterialCommunityIcons name="lock" size={22} color="#444" style={styles.inputIcon} />
-                        <TextInput
-                            ref={passwordRef}
-                            style={styles.input}
-                            placeholder="Password"
-                            value={formData.password}
-                            onChangeText={(text) => handleInputChange('password', text)}
-                            autoCapitalize="none"
-                            returnKeyType="next"
-                            onSubmitEditing={() => focusNextInput(emailRef)}
-                            onFocus={() => handleScrollToInput(passwordRef)} 
-                        />
-                    </View>
-                    
-                    {/* Email */}
-                    <View style={styles.inputGroup}>
-                        <Icon name="mail-outline" size={22} color="#444" style={styles.inputIcon} />
-                        <TextInput
-                            ref={emailRef}
-                            style={styles.input}
-                            placeholder="Email"
-                            value={formData.email}
-                            onChangeText={(text) => handleInputChange('email', text)}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            returnKeyType="next"
-                            onSubmitEditing={() => focusNextInput(firstNameRef)}
-                            onFocus={() => handleScrollToInput(emailRef)} 
-                        />
-                    </View>
-                    
-                    {/* First Name */}
-                    <View style={styles.inputGroup}>
-                        <Icon name="bookmark-outline" size={22} color="#444" style={styles.inputIcon} />
-                        <TextInput
-                            ref={firstNameRef}
-                            style={styles.input}
-                            placeholder="First Name"
-                            value={formData.firstname}
-                            onChangeText={(text) => handleInputChange('firstname', text)}
-                            returnKeyType="next"
-                            onSubmitEditing={() => focusNextInput(lastNameRef)}
-                            onFocus={() => handleScrollToInput(firstNameRef)} 
-                        />
-                    </View>
-                    
-                    {/* Last Name */}
-                    <View style={styles.inputGroup}>
-                        <Icon name="bookmark-outline" size={22} color="#444" style={styles.inputIcon} />
-                        <TextInput
-                            ref={lastNameRef}
-                            style={styles.input}
-                            placeholder="Last Name"
-                            value={formData.lastname}
-                            onChangeText={(text) => handleInputChange('lastname', text)}
-                            returnKeyType="done"
-                            onSubmitEditing={() => {
+                    {/* Form Fields */}
+                    <View style={styles.formContainer}>
+                        {/* Username */}
+                        <View style={styles.inputGroup}>
+                            <Icon name="person-circle-outline" size={22} color="#444" style={styles.inputIcon} />
+                            <TextInput
+                                ref={usernameRef}
+                                style={styles.input}
+                                placeholder="Username"
+                                value={formData.username}
+                                placeholderTextColor={'#333'}
+                                onChangeText={(text) => handleInputChange('username', text)}
+                                autoCapitalize="none"
+                                returnKeyType="next"
+                                onSubmitEditing={() => focusNextInput(passwordRef)}
+                            />
+                        </View>
+                        
+                        {/* Password */}
+                        <View style={styles.inputGroup}>
+                            <MaterialCommunityIcons name="lock" size={22} color="#444" style={styles.inputIcon} />
+                            <TextInput
+                                ref={passwordRef}
+                                style={styles.input}
+                                placeholder="Password"
+                                placeholderTextColor={'#333'}
+                                value={formData.password}
+                                onChangeText={(text) => handleInputChange('password', text)}
+                                autoCapitalize="none"
+                                secureTextEntry
+                                returnKeyType="next"
+                                onSubmitEditing={() => focusNextInput(emailRef)}
+                            />
+                        </View>
+                        
+                        {/* Email */}
+                        <View style={styles.inputGroup}>
+                            <Icon name="mail-outline" size={22} color="#444" style={styles.inputIcon} />
+                            <TextInput
+                                ref={emailRef}
+                                style={styles.input}
+                                placeholder="Email"
+                                placeholderTextColor={'#333'}
+                                value={formData.email}
+                                onChangeText={(text) => handleInputChange('email', text)}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                returnKeyType="next"
+                                onSubmitEditing={() => focusNextInput(firstNameRef)}
+                            />
+                        </View>
+                        
+                        {/* First Name */}
+                        <View style={styles.inputGroup}>
+                            <Icon name="bookmark-outline" size={22} color="#444" style={styles.inputIcon} />
+                            <TextInput
+                                ref={firstNameRef}
+                                style={styles.input}
+                                placeholder="First Name"
+                                placeholderTextColor={'#333'}
+                                value={formData.firstname}
+                                onChangeText={(text) => handleInputChange('firstname', text)}
+                                returnKeyType="next"
+                                onSubmitEditing={() => focusNextInput(lastNameRef)}
+                            />
+                        </View>
+                        
+                        {/* Last Name */}
+                        <View style={styles.inputGroup}>
+                            <Icon name="bookmark-outline" size={22} color="#444" style={styles.inputIcon} />
+                            <TextInput
+                                ref={lastNameRef}
+                                style={styles.input}
+                                placeholder="Last Name"
+                                placeholderTextColor={'#333'}
+
+                                value={formData.lastname}
+                                onChangeText={(text) => handleInputChange('lastname', text)}
+                                returnKeyType="done"
+                                onSubmitEditing={() => {
+                                    Keyboard.dismiss();
+                                    setShowDatePicker(true);
+                                }}
+                            />
+                        </View>
+                        
+                        {/* Date of Birth Trigger */}
+                        <TouchableOpacity 
+                            style={styles.inputGroup} 
+                            onPress={() => {
                                 Keyboard.dismiss();
                                 setShowDatePicker(true);
                             }}
-                            onFocus={() => handleScrollToInput(lastNameRef)} 
+                        >
+                            <Icon name="calendar-outline" size={22} color="#444" style={styles.inputIcon} />
+                            <Text style={[styles.input, { paddingVertical: 14, color: '#333' }]}>
+                                {formatDate(formData.birth)}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* iOS Date Picker Modal */}
+                    {showDatePicker && Platform.OS === 'ios' && (
+                        <Modal
+                            transparent={true}
+                            animationType="fade"
+                            visible={showDatePicker}
+                            onRequestClose={() => setShowDatePicker(false)}
+                        >
+                            <View style={styles.iosPickerOverlay}> 
+                                <View style={styles.iosPickerContent}>
+                                    <View style={styles.iosPickerHeader}>
+                                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                            <Text style={styles.iosPickerButtonText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <Text style={styles.iosPickerTitle}>Date of Birth</Text>
+                                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                            <Text style={[styles.iosPickerButtonText, { fontWeight: 'bold' }]}>Done</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <DateTimePicker
+                                        value={formData.birth}
+                                        mode="date"
+                                        display="spinner"
+                                        onChange={onDateChange}
+                                        maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
+                                        style={styles.pickerIOS}
+                                        textColor="black"
+                                    />
+                                </View>
+                            </View>
+                        </Modal>
+                    )}
+
+                    {/* Android Date Picker */}
+                    {showDatePicker && Platform.OS === 'android' && (
+                        <DateTimePicker
+                            value={formData.birth}
+                            mode="date"
+                            display="default" 
+                            onChange={onDateChange}
+                            maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
+                        />
+                    )}
+
+                    {/* Newsletter Switch */}
+                    <View style={styles.switchContainer}>
+                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                            <Icon name="information-circle-outline" size={18} color="#999" style={{marginRight: 8}} />
+                            <Text style={styles.switchText}>Receive promotional emails</Text>
+                        </View>
+                        <Switch
+                            trackColor={{ false: "#ccc", true: "#3498db" }}
+                            thumbColor={"#fff"}
+                            onValueChange={setReceiveEmails}
+                            value={receiveEmails}
                         />
                     </View>
-                    
-                    {/* Date of Birth - Touchable Input */}
+
+                    {/* Submit Button */}
                     <TouchableOpacity 
-                        style={styles.inputGroup} 
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            handleScrollToInput(birthRef); 
-                            setShowDatePicker(true);
-                        }}
-                        ref={birthRef}
+                        style={[styles.signUpButton, loading && styles.signUpButtonDisabled]} 
+                        onPress={handleRegister}
+                        disabled={loading}
                     >
-                        <Icon name="calendar-outline" size={22} color="#444" style={styles.inputIcon} />
-                        <Text style={[styles.input, styles.dateInputText, { color: formatDate(formData.birth) === 'DD/MM/YYYY' ? '#7f8c8d' : '#333' }]}>
-                            {formatDate(formData.birth)}
-                        </Text>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.signUpButtonText}>Sign Up</Text>
+                        )}
                     </TouchableOpacity>
-                </View>
 
-                {/* DatePicker Component */}
-                {/* Full-Width, Bottom-Sheet iOS Picker Modal */}
-                {showDatePicker && Platform.OS === 'ios' && (
-                    <Modal
-                        transparent={true} // Revert to transparent background to see main screen beneath
-                        animationType="slide"
-                        visible={showDatePicker}
-                        onRequestClose={() => setShowDatePicker(false)}
-                    >
-                        {/* iOS Picker Overlay: Takes full screen height but justifies content to the end */}
-                        <View style={styles.iosPickerOverlay}> 
-                            
-                            {/* The Picker Container itself: full width, fixed height */}
-                            <View style={styles.iosPickerContent}>
-                                <View style={styles.iosPickerHeader}>
-                                    <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                                        <Text style={styles.iosPickerButtonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <Text style={styles.iosPickerTitle}>Select Date of Birth</Text>
-                                    <TouchableOpacity onPress={confirmIOSDate}>
-                                        <Text style={[styles.iosPickerButtonText, { fontWeight: 'bold', color: '#3498db' }]}>Done</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                
-                                <DateTimePicker
-                                    value={formData.birth}
-                                    mode="date"
-                                    display="spinner"
-                                    onChange={onDateChange}
-                                    maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
-                                    style={styles.pickerIOS}
-                                />
-                            </View>
-                        </View>
-                    </Modal>
-                )}
+                    {/* Login Link */}
+                    <View style={styles.loginContainer}>
+                        <Text style={styles.loginText}>Already have an account?</Text>
+                        <TouchableOpacity onPress={() => router.push('./Login')}>
+                            <Text style={styles.loginLink}>Login</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                {/* Android Picker (renders natively as a dialog) */}
-                {showDatePicker && Platform.OS === 'android' && (
-                    <DateTimePicker
-                        value={formData.birth}
-                        mode="date"
-                        display="default" 
-                        onChange={onDateChange}
-                        maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 5))}
-                    />
-                )}
-
-                {/* Promotional Emails Switch and Button (Unchanged) */}
-                <View style={styles.switchContainer}>
-                    <Text style={styles.switchText}>Receive promotional emails</Text>
-                    <Icon name="information-circle-outline" size={18} color="#999" style={{marginRight: 8}} />
-                    <Switch
-                        trackColor={{ false: "#ccc", true: "#3498db" }}
-                        thumbColor={"#fff"}
-                        onValueChange={setReceiveEmails}
-                        value={receiveEmails}
-                    />
-                </View>
-
-                <TouchableOpacity 
-                    style={[styles.signUpButton, loading && styles.signUpButtonDisabled]} 
-                    onPress={handleRegister}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                        <Text style={styles.signUpButtonText}>Sign Up</Text>
-                    )}
-                </TouchableOpacity>
-
-                <View style={styles.loginContainer}>
-                    <Text style={styles.loginText}>Already have an account?</Text>
-                    <TouchableOpacity onPress={() => { router.push('./Login') }}>
-                        <Text style={styles.loginLink}>Login</Text>
-                    </TouchableOpacity>
-                </View>
-
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -444,7 +438,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f7f9fc', 
-        paddingTop: 40,
+        paddingTop: Platform.OS === 'android' ? 40 : 0,
     },
     scrollContent: {
         paddingHorizontal: 25,
@@ -455,6 +449,7 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'flex-start',
         marginBottom: 30,
+        marginTop: 20,
     },
     headerTitle: {
         fontSize: 32,
@@ -466,8 +461,6 @@ const styles = StyleSheet.create({
         color: '#7f8c8d',
         marginTop: 5,
     },
-    
-    // --- Profile Picture Styles (Unchanged) ---
     profileSection: {
         width: '100%',
         alignItems: 'center',
@@ -481,16 +474,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
+        overflow: 'hidden',
     },
     profileImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 50,
     },
     cameraIcon: {
         position: 'absolute',
-        bottom: 0,
-        right: 0,
+        bottom: 5,
+        right: 5,
         backgroundColor: '#3498db',
         borderRadius: 15,
         padding: 6,
@@ -506,8 +499,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: 16,
     },
-
-    // --- Form Styles (Unchanged) ---
     formContainer: {
         width: '100%',
     },
@@ -521,11 +512,11 @@ const styles = StyleSheet.create({
         height: 55,
         borderWidth: 1,
         borderColor: '#e0e7ee', 
+        elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
         shadowRadius: 3,
-        elevation: 2,
     },
     inputIcon: {
         marginRight: 12,
@@ -534,29 +525,25 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         color: '#333',
-        paddingVertical: 10,
+        height: '100%',
     },
-    dateInputText: {
-        // Handled dynamically
-    },
-
-    // --- FIXED HEIGHT / FULL WIDTH iOS Picker Styles ---
     iosPickerOverlay: {
         flex: 1,
-        justifyContent: 'flex-end', // Aligns content to the bottom
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dim background
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     iosPickerContent: {
         width: '100%',
-        backgroundColor: '#fff', // White background for the sheet
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
     iosPickerHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 15,
+        paddingHorizontal: 20,
         height: 50,
-        backgroundColor: '#f7f7f7',
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
@@ -572,24 +559,20 @@ const styles = StyleSheet.create({
     pickerIOS: {
         backgroundColor: '#fff',
         width: '100%', 
-        height: 250, // Standard height for the date picker wheel
+        height: 220,
     },
-
-    // --- General Styles (Unchanged) ---
     switchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '100%',
-        marginTop: 15,
+        marginTop: 10,
         marginBottom: 30,
-        paddingHorizontal: 5,
     },
     switchText: {
         fontSize: 15,
         color: '#555',
     },
-
     signUpButton: {
         width: '100%',
         height: 55,
@@ -605,7 +588,6 @@ const styles = StyleSheet.create({
     },
     signUpButtonDisabled: {
         backgroundColor: '#95a5a6',
-        shadowOpacity: 0.1,
         elevation: 1,
     },
     signUpButtonText: {
@@ -613,10 +595,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
     },
-
     loginContainer: {
         flexDirection: 'row',
         marginTop: 25,
+        marginBottom: 20,
     },
     loginText: {
         fontSize: 15,

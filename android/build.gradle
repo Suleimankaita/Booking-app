@@ -1,0 +1,59 @@
+// Top-level build file
+
+buildscript {
+    ext {
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        ndkVersion = "29.0.14206865"
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.2")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+
+    // Resolve duplicate classes & force stable dependencies
+    configurations.all {
+        resolutionStrategy {
+            force "androidx.core:core:1.16.0"
+        }
+        // Exclude old AsyncStorage to avoid duplicate classes
+        exclude group: "com.reactnativecommunity", module: "async-storage"
+        exclude group: "com.android.support"
+    }
+
+    // Safe SDK injection for library modules
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("com.android.library")) {
+            project.android {
+                compileSdkVersion rootProject.ext.compileSdkVersion
+
+                defaultConfig {
+                    minSdkVersion rootProject.ext.minSdkVersion
+                    targetSdkVersion rootProject.ext.targetSdkVersion
+                }
+            }
+        }
+    }
+}
+
+// Apply Expo + React Native plugins
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

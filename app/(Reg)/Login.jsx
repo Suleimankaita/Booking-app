@@ -36,7 +36,6 @@ const LoginScreen = () => {
         
         dispatch(settoken(result?.data));
         await AsyncStorage.setItem('cokkie', JSON.stringify(result?.data));
-        router.replace('/');
       }
     } catch (err) {
       alert(err?.message || 'An unexpected error occurred');

@@ -1,12 +1,12 @@
-import { useGetBooksQuery, useStartTrialMutation ,usePurchasedBookMutation} from '@/components/api/Getslice';
+import { useGetBooksQuery, usePurchasedBookMutation, useStartTrialMutation } from '@/components/api/Getslice';
 import { uri } from '@/components/api/uri';
+import { getuserfound } from '@/components/Funcslice';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import SkeletonLoader from 'expo-skeleton-loader';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { usePaystack } from 'react-native-paystack-webview';
 import Icon from 'react-native-vector-icons/Ionicons';
-import SkeletonLoader from 'expo-skeleton-loader';
-import { getuserfound } from '@/components/Funcslice';
 import { useSelector } from 'react-redux';
 const getRemainingTime = (endTime) => {
   if (!endTime) return null;
@@ -68,10 +68,10 @@ const BookDetailsPage = () => {
     const [price,setprice]=useState(0)
 
   useEffect(() => {
+    console.log(56789,foundBook)
     if (!data || isBooksLoading) return;
 
     const foundBook = data.find(res => res?._id === id);
-    console.log(foundBook)
     if (foundBook) {
       const trialEndsTime = foundBook.trialExpires?.$date || foundBook.trialExpires;
       setprice(foundBook?.price)
@@ -239,13 +239,20 @@ const BookDetailsPage = () => {
     //   </TouchableOpacity>
     // );
   }else if(book?.istrialend){
-actionButton = (
-     <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
-          <Icon name="cart-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
-        </TouchableOpacity>
 
+actionButton = (
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#2ecc71' }]} onPress={handleReadBook}>
+        <Icon name="book-outline" size={20} color="#fff" />
+        <Text style={styles.buttonText}>Read Now</Text>
+      </TouchableOpacity>
     );
+    // actionButton = (
+//      <TouchableOpacity style={[styles.actionButton, styles.buyButton]} onPress={handlePurchase}>
+//           <Icon name="cart-outline" size={20} color="#fff" />
+//           <Text style={styles.buttonText}>Buy ₦{book?.price}</Text>
+//         </TouchableOpacity>
+
+//     );
   } else {
     // STATE 3: No Access or Trial Expired
     const trialExpired = book.trialActive && timeRemaining?.expired;

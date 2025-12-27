@@ -75,6 +75,7 @@ const EpubReader = () => {
     const [isSpeaking, setIsSpeaking] = useState(false); 
 
     const controlsAnim = useRef(new Animated.Value(1)).current; 
+    const pageAnim = useRef(new Animated.Value(0)).current;
     
     const[bookss,setBookss]=useState({})
     
@@ -232,11 +233,17 @@ const EpubReader = () => {
     const handleNextChapter = useCallback(() => {
         if (isScrolling.current) return;
         isScrolling.current = true;
+        // Play a quick page-turn 'paper' animation
+        Animated.sequence([
+            Animated.timing(pageAnim, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+            Animated.timing(pageAnim, { toValue: 0, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: true })
+        ]).start();
+
         injectJS(`rendition.next(); true;`);
         setTimeout(() => {
             scrollRef.current?.scrollTo({ x: WINDOW_WIDTH, animated: false });
             isScrolling.current = false;
-        }, 100); 
+        }, 120);
         // 🆕 Stop speech and clear highlights on chapter change
         if (isSpeaking) Speech.stop();
         setIsSpeaking(false);
@@ -246,11 +253,17 @@ const EpubReader = () => {
     const handlePrevChapter = useCallback(() => {
         if (isScrolling.current) return;
         isScrolling.current = true;
+        // Play the reverse page-turn animation
+        Animated.sequence([
+            Animated.timing(pageAnim, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+            Animated.timing(pageAnim, { toValue: 0, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: true })
+        ]).start();
+
         injectJS(`rendition.prev(); true;`);
         setTimeout(() => {
             scrollRef.current?.scrollTo({ x: WINDOW_WIDTH, animated: false });
             isScrolling.current = false;
-        }, 100);
+        }, 120);
         // 🆕 Stop speech and clear highlights on chapter change
         if (isSpeaking) Speech.stop();
         setIsSpeaking(false);
